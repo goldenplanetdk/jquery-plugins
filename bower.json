@@ -1,0 +1,19 @@
+{
+  "name": "jquery-obb",
+  "main": "index.js",
+  "version": "0.1.0",
+  "homepage": "https://github.com/goldenplanetdk/jquery-plugins",
+  "authors": [
+    "Steven Pribilinskiy <stepan@goldenplanet.com>"
+  ],
+  "description": "jQuery plugins for OpenBizBox",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ],
+  "devDependencies": {
+    "jquery": "~2.1.4"
+  }
+}
