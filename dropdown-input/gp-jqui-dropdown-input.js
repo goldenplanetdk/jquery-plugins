@@ -61,6 +61,11 @@
  */
 var _, bootbox;
 
+if (typeof module === 'object' && module.exports) {
+	bootbox = require('bootbox');
+	_ = require('lodash');
+}
+
 $.widget('gp.obbDropdownInput', {
 
 	options: {
@@ -73,12 +78,8 @@ $.widget('gp.obbDropdownInput', {
 		addItemPayloadDataKey: 'newItem',
 		deleteRequestPayload: {},
 		responseCallbacks: {
-			addSuccess: function() {},
-			deleteSuccess: function() {},
-		},
-		dependencies: {
-			bootbox: window.bootbox,
-			lodash: window.lodash,
+			addSuccess: _.noop,
+			deleteSuccess: _.noop,
 		},
 		translations: {
 			add: 'Add',
@@ -148,13 +149,10 @@ $.widget('gp.obbDropdownInput', {
 		options.ajaxUrls.editItem = options.ajaxUrls.editItem || $container.data('edit');
 		options.ajaxUrls.searchItem = options.ajaxUrls.searchItem || $container.data('search');
 
-		_ = options.dependencies.lodash;
-		bootbox = options.dependencies.bootbox;
-
 		var $dropdown = $(
 			'<span class="dropdown">'
 			+ '	<a href="#" class="dropdown-toggle" data-toggle="dropdown">'
-			+ '		<input type="text" class="dropdown-toggle-input" autocomplete="off">'
+			+ '		<input type="text" class="form-control dropdown-toggle-input" autocomplete="off">'
 			+ '		<i class="glyphicon glyphicon-search"></i>'
 			+ '	</a>'
 			+ '	<ul class="dropdown-menu">'
