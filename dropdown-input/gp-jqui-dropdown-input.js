@@ -16,9 +16,16 @@
  * @namespace gp.obbDropdownInput
  *
  * @example HTML
- *    <div class="gp-dropdown-input dropdown-input-for-something">
- *
+ *    <div
+ *         class="gp-dropdown-input dropdown-input-for-something"
+ *         data-add="{{ path('BESomethingNewAjax') }}"
+ *         data-delete="{{ path('BESomethingDeleteAjax') }}"
+ *         data-search="{{ path('BESomethingSearchAjax') }}"
+ *         data-edit="{{ path('BESomething') }}"
+ *    >
  *        <label>{{ _('Title') }}:</label>
+ *
+ *        <span class="add-button-label-slot">{{ _('Add') }}</span>
  *
  *        <div class="new-item-input-slot">
  *            <div class="locale" lang="da">
@@ -135,9 +142,7 @@ $.widget('gp.obbDropdownInput', {
 			+ '		</li>'
 			+ '		<li role="separator" class="divider"></li>'
 			+ '		<li class="new-item-form-group">'
-			+ '   		<button type="button" class="btn btn-primary btn-add">'
-			+ '			' + obb.translations.add
-			+ '			</button>'
+			+ '   		<button type="button" class="btn btn-primary btn-add"></button>'
 			+ '		</li>'
 			+ '	</ul>'
 			+ '</span>'
@@ -145,6 +150,7 @@ $.widget('gp.obbDropdownInput', {
 
 		var $label = $container.find('> label:first-child');
 		var $loader = $('<div class="ajax-loading-bar" style="display: none;">');
+		var $addButtonLabelSlot = $container.find('.add-button-label-slot');
 		var $newItemInputSlot = $container.find('.new-item-input-slot');
 		var $newItemInput = $newItemInputSlot.find('input[type="text"]');
 		var isMultipleInputs = $newItemInput.length > 1;
@@ -153,6 +159,7 @@ $.widget('gp.obbDropdownInput', {
 		var $dropdownToggle = $dropdown.find('.dropdown-toggle');
 		var $dropdownToggleInput = $dropdown.find('.dropdown-toggle-input');
 		var $newItemFormGroup = $dropdown.find('.new-item-form-group');
+		var $newItemAddButton = $newItemFormGroup.find('.btn-add');
 
 		$container
 			.append($dropdown)
@@ -168,6 +175,8 @@ $.widget('gp.obbDropdownInput', {
 			.toggleClass('multiple-inputs', isMultipleInputs)
 			.toggleClass('single-input', !isMultipleInputs)
 		;
+
+		$newItemAddButton.html($addButtonLabelSlot.html() || 'Add');
 
 		$newItemInput.toggleClass('form-control', !isMultipleInputs);
 
