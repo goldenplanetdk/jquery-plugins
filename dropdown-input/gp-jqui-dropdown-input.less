@@ -1,0 +1,152 @@
+.gp-dropdown-input {
+
+	@icon-horizontal-padding: 10px;
+	@item-height: 30px;
+	@list-horizontal-padding: (@grid-gutter-width / 2) - @icon-horizontal-padding;
+
+	.dropdown {
+		position: relative;
+
+		.dropdown-menu {
+			border-top-left-radius: 0;
+			border-top-right-radius: 0;
+			right: 0;
+		}
+
+		.dropdown-toggle {
+
+			input {
+				padding-right: 20px;
+				width: 300px;
+			}
+
+			i {
+				position: absolute;
+				top: 2px;
+				right: 5px;
+			}
+		}
+	}
+
+	.ajax-loading-bar {
+		margin: auto;
+		width: 220px;
+	}
+
+	.items-list {
+		max-height: @item-height * 8;
+		overflow: auto;
+		padding-left: 0;
+
+		&::-webkit-scrollbar {
+			width: 10px;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: @gray-lighter;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: @gray-light;
+
+			&:hover { background: @gray; }
+			&:active { background: @brand-primary; }
+		}
+
+		&:hover {
+
+			&::-webkit-scrollbar-track {
+				background: darken(@gray-lighter, 5%);
+
+				&:hover {
+					background: darken(@gray-lighter, 10%);
+				}
+			}
+		}
+	}
+
+	.list-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-left: @list-horizontal-padding;
+		padding-right: @list-horizontal-padding;
+
+		&.active {
+			background: darken(@dropdown-link-hover-bg, 2%);
+		}
+
+		.list-item-text,
+		.list-item-edit,
+		.list-item-delete {
+
+			&:hover,
+			&:focus {
+				background: @dropdown-link-hover-bg;
+				text-decoration: none;
+			}
+		}
+
+		.list-item-text {
+			flex-grow: 1;
+			min-width: 0;
+			padding: 5px @icon-horizontal-padding;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			color: @text-color;
+
+			&:hover,
+			&:focus {
+				color: @link-hover-color;
+			}
+		}
+
+		.list-item-edit {
+			padding: 5px @icon-horizontal-padding;
+			color: @gray-light;
+
+			&:hover,
+			&:focus {
+				color: @link-hover-color;
+			}
+		}
+
+		.list-item-delete {
+			padding: 5px @icon-horizontal-padding;
+			color: @gray-light;
+
+			&:hover,
+			&:focus {
+				color: @brand-danger;
+			}
+		}
+	}
+
+	.new-item-form-group {
+		padding: 0 (@grid-gutter-width / 2);
+
+		&.single-input {
+			display: flex;
+
+			input {
+				margin-bottom: 0;
+				border-top-right-radius: 0;
+				border-bottom-right-radius: 0;
+			}
+
+			.btn {
+				border-top-left-radius: 0;
+				border-bottom-left-radius: 0;
+			}
+		}
+	}
+
+	.new-item-input-slot {
+		flex-grow: 1;
+
+		> input {
+			width: 100%;
+			margin-bottom: .5em;
+		}
+	}
+}
