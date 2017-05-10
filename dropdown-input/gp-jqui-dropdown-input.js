@@ -73,8 +73,8 @@ $.widget('gp.obbDropdownInput', {
 		addItemPayloadDataKey: 'newItem',
 		deleteRequestPayload: {},
 		responseCallbacks: {
-			addSuccess: _.noop,
-			deleteSuccess: _.noop,
+			addSuccess: function() {},
+			deleteSuccess: function() {},
 		},
 		dependencies: {
 			bootbox: window.bootbox,
@@ -491,13 +491,12 @@ $.widget('gp.obbDropdownInput', {
 				// thus we need to open it after the current call stack
 				window.setTimeout(function() {
 					widget._showDropdown();
-				})
+				});
 			}
 
 			widget._focusInput();
 		});
-	}
-	,
+	},
 
 	/**
 	 * Show dropdown if closed
@@ -517,8 +516,7 @@ $.widget('gp.obbDropdownInput', {
 			widget.formerId = widget._getActiveId();
 			widget._focusInput();
 		}
-	}
-	,
+	},
 
 	/**
 	 * Hide dropdown
@@ -541,8 +539,7 @@ $.widget('gp.obbDropdownInput', {
 				widget._applyActiveItem();
 			}
 		}
-	}
-	,
+	},
 
 	/**
 	 * Clear input field
@@ -554,8 +551,7 @@ $.widget('gp.obbDropdownInput', {
 
 		widget._setActiveId(null);
 		widget._applyActiveItem();
-	}
-	,
+	},
 
 	/**
 	 * Check whether dropdown is open
@@ -564,8 +560,7 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_isDropdownOpen: function() {
 		return this.$dropdown.is('.open');
-	}
-	,
+	},
 
 	/**
 	 * Get active value's id
@@ -574,8 +569,7 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_getActiveId: function() {
 		return Number(this.$hiddenInput.val());
-	}
-	,
+	},
 
 	/**
 	 * Set id of active value
@@ -584,8 +578,7 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_setActiveId: function(activeId) {
 		this.$hiddenInput.val(_.isNil(activeId) ? '' : activeId);
-	}
-	,
+	},
 
 	/**
 	 * Get list item that is marked as active
@@ -604,8 +597,7 @@ $.widget('gp.obbDropdownInput', {
 		});
 
 		return $activeListItem;
-	}
-	,
+	},
 
 	/**
 	 * Add active class to active list item
@@ -626,8 +618,7 @@ $.widget('gp.obbDropdownInput', {
 
 			$listItem.toggleClass('active', listItemId === activeId);
 		});
-	}
-	,
+	},
 
 	/**
 	 * Update widget according to the values of active item
@@ -645,8 +636,7 @@ $.widget('gp.obbDropdownInput', {
 
 		// Mark selected list item with `active` class
 		widget._markActiveListItem();
-	}
-	,
+	},
 
 	/**
 	 * Update input field with current title (from hidden input)
@@ -667,8 +657,7 @@ $.widget('gp.obbDropdownInput', {
 		});
 
 		widget.$input.val(currentTitle);
-	}
-	,
+	},
 
 	/**
 	 * Toggle list items and new title form visibility in the dropdown
@@ -699,8 +688,7 @@ $.widget('gp.obbDropdownInput', {
 
 		widget._markActiveListItem();
 		widget._toggleSearchIcon();
-	}
-	,
+	},
 
 	/**
 	 * Hide the list of tab titles
@@ -709,8 +697,7 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_hideTitleEls: function() {
 		this.$container.find(this.selectors.listItem).hide();
-	}
-	,
+	},
 
 	/**
 	 * Actions on item activation
@@ -725,8 +712,7 @@ $.widget('gp.obbDropdownInput', {
 		widget._setActiveId($selectedListItem.data('id'));
 
 		widget._applyActiveItem();
-	}
-	,
+	},
 
 	/**
 	 * Show clear icon instead of search when input field is not empty
@@ -741,8 +727,7 @@ $.widget('gp.obbDropdownInput', {
 			.toggleClass('glyphicon-search', isEmptyField)
 			.toggleClass('glyphicon-erase', !isEmptyField)
 		;
-	}
-	,
+	},
 
 	/**
 	 * Find matching tab titles in list (case-insensitive)
@@ -779,8 +764,7 @@ $.widget('gp.obbDropdownInput', {
 		widget._markActiveListItem();
 
 		return $matching;
-	}
-	,
+	},
 
 	/**
 	 * Form for localized tab title
@@ -860,8 +844,7 @@ $.widget('gp.obbDropdownInput', {
 				'json'
 			);
 		});
-	}
-	,
+	},
 
 	/**
 	 * Widget-specific cleanup
@@ -869,5 +852,5 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_destroy: function() {
 		this.$container.find(selectors.listItem).remove();
-	}
+	},
 });
