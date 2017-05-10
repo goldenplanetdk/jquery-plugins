@@ -1,0 +1,30 @@
+.gp-dropdown-input {
+
+	.new-item-form-group {
+		padding: 0 (@grid-gutter-width / 2);
+
+		&.single-input {
+			display: flex;
+
+			input {
+				margin-bottom: 0;
+				border-top-right-radius: 0;
+				border-bottom-right-radius: 0;
+			}
+
+			.btn {
+				border-top-left-radius: 0;
+				border-bottom-left-radius: 0;
+			}
+		}
+	}
+
+	.new-item-input-slot {
+		flex-grow: 1;
+
+		> input {
+			width: 100%;
+			margin-bottom: .5em;
+		}
+	}
+}

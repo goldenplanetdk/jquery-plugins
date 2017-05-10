@@ -1,7 +1,7 @@
 {
   "name": "@goldenplanet/jquery",
   "description": "jQuery abd jQueryUI plugins for OpenBizBox",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "authors": [
     "Steven Pribilinskiy <stepan@goldenplanet.com>"
   ],
@@ -9,6 +9,7 @@
   "main": "index.js",
   "dependencies": {
     "bootbox": "4.4.0",
+    "bootstrap": "3.3.7",
     "jquery": "2.2.3",
     "lodash": "4.17.4"
   }

@@ -59,11 +59,12 @@
  *			}
  * 	  );
  */
-var _, bootbox;
+var _, $, bootbox;
 
 if (typeof module === 'object' && module.exports) {
 	bootbox = require('bootbox');
 	_ = require('lodash');
+	$ = require('jquery');
 }
 
 $.widget('gp.obbDropdownInput', {
@@ -154,12 +155,19 @@ $.widget('gp.obbDropdownInput', {
 			+ '	<a href="#" class="dropdown-toggle" data-toggle="dropdown">'
 			+ '		<input type="text" class="form-control dropdown-toggle-input" autocomplete="off">'
 			+ '		<i class="glyphicon glyphicon-search"></i>'
+			+ '		<svg'
+			+ '			class="svg-loader"'
+			+ '			viewBox="0 0 32 32" width="32" height="32"'
+			+ '			style="display: none;"'
+			+ '		>'
+			+ '			<circle id="spinner" cx="16" cy="16" r="14" fill="none"></circle>'
+			+ '		</svg>'
 			+ '	</a>'
 			+ '	<ul class="dropdown-menu">'
 			+ '		<li>'
 			+ '			<ul class="items-list"></ul>'
 			+ '		</li>'
-			+ '		<li role="separator" class="divider"></li>'
+			+ '		<li class="divider" role="separator"></li>'
 			+ '		<li class="new-item-form-group">'
 			+ '   		<button type="button" class="btn btn-primary btn-add"></button>'
 			+ '		</li>'
@@ -168,7 +176,6 @@ $.widget('gp.obbDropdownInput', {
 		);
 
 		var $label = $container.find('> label:first-child');
-		var $loader = $('<div class="ajax-loading-bar" style="display: none;">');
 		var $addButtonLabelSlot = $container.find('.add-button-label-slot');
 		var $newItemInputSlot = $container.find('.new-item-input-slot');
 		var $newItemInput = $newItemInputSlot.find('input[type="text"]');
@@ -179,6 +186,9 @@ $.widget('gp.obbDropdownInput', {
 		var $dropdownToggleInput = $dropdown.find('.dropdown-toggle-input');
 		var $newItemFormGroup = $dropdown.find('.new-item-form-group');
 		var $newItemAddButton = $newItemFormGroup.find('.btn-add');
+
+		var $loader = $(
+		);
 
 		$container
 			.append($dropdown)
@@ -208,9 +218,9 @@ $.widget('gp.obbDropdownInput', {
 			$dropdownMenu: $dropdown.find('.dropdown-menu'),
 			$input: $dropdownToggle.find('input'),
 			$inputSearchEraseButton: $dropdownToggle.find('i'),
+			$loader: $dropdownToggle.find('.svg-loader'),
 			$newTitleForm: $dropdown.find('.new-item-form-group'),
 			$newTitleFormDivider: $dropdown.find('.divider'),
-			$loader: $container.find('.ajax-loading-bar'),
 			$hiddenInput: $container.find('input[type="hidden"]'),
 		});
 
@@ -350,14 +360,16 @@ $.widget('gp.obbDropdownInput', {
 						options.deleteRequestPayload
 					);
 
+					widget.$inputSearchEraseButton.hide();
 					widget.$loader.show();
 
-					$.post(
-						options.ajaxUrls.deleteItem,
-						requestPayload,
-						function ajaxDeleteSuccess(response) {
-
-							widget.$loader.hide();
+					$
+						.ajax({
+							type: 'POST',
+							url: options.ajaxUrls.deleteItem,
+							data: requestPayload,
+						})
+						.done(function ajaxDeleteSuccess(response) {
 
 							if (response.success) {
 
@@ -366,11 +378,16 @@ $.widget('gp.obbDropdownInput', {
 								widget._clearInput();
 
 								callbacks.deleteSuccess(widget, promise);
+
 							} else {
 								bootbox.alert(response.message);
 							}
-						}
-					);
+						})
+						.always(function ajaxDeleteFinally() {
+							widget.$inputSearchEraseButton.show();
+							widget.$loader.hide();
+						})
+					;
 				});
 			});
 		});
@@ -407,8 +424,10 @@ $.widget('gp.obbDropdownInput', {
 
 			.on('click', function inputClickHandler() {
 
-				widget._filterList();
-				widget._focusInput();
+				if (!widget._isDropdownOpen()) {
+					widget._filterList();
+					widget._focusInput();
+				}
 			})
 
 			.on('keypress', function inputKeypressHandler(event) {
@@ -437,8 +456,8 @@ $.widget('gp.obbDropdownInput', {
 				var selectors = widget.selectors;
 				var title = widget.$input.val();
 
-				widget._showDropdown();
 				widget._filterList();
+				widget._showDropdown();
 				widget.$newTitleForm.find('input').val(title);
 
 				// Select item from dropdown on enter key
@@ -490,6 +509,7 @@ $.widget('gp.obbDropdownInput', {
 				// This button triggers the Bootstrap dropdown plugin toggle event
 				// thus we need to open it after the current call stack
 				window.setTimeout(function() {
+					widget._filterList();
 					widget._showDropdown();
 				});
 			}
@@ -814,19 +834,21 @@ $.widget('gp.obbDropdownInput', {
 			}
 
 			$button.addClass('disabled');
+			widget.$inputSearchEraseButton.hide();
 			widget.$loader.show();
 
 			var requestPayload = {};
 
 			requestPayload[options.addItemPayloadDataKey] = data;
 
-			$.post(
-				ajaxUrls.addItem,
-				requestPayload,
-				function(response) {
-
-					$button.removeClass('disabled');
-					widget.$loader.hide();
+			$
+				.ajax({
+					type: 'POST',
+					url: ajaxUrls.addItem,
+					data: requestPayload,
+					dataType: 'json', // for response
+				})
+				.done(function ajaxAddItemSuccess(response) {
 
 					if (response.success) {
 
@@ -840,9 +862,13 @@ $.widget('gp.obbDropdownInput', {
 					else {
 						bootbox.alert(response.message);
 					}
-				},
-				'json'
-			);
+				})
+				.always(function ajaxAddItemFinally() {
+					$button.removeClass('disabled');
+					widget.$inputSearchEraseButton.show();
+					widget.$loader.hide();
+				})
+			;
 		});
 	},
 
