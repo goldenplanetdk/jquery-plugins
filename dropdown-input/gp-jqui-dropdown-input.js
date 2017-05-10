@@ -18,14 +18,12 @@
  * @example HTML
  *    <div
  *         class="gp-dropdown-input dropdown-input-for-something"
+ *         data-edit="{{ path('BESomething') }}"
  *         data-add="{{ path('BESomethingNewAjax') }}"
  *         data-delete="{{ path('BESomethingDeleteAjax') }}"
  *         data-search="{{ path('BESomethingSearchAjax') }}"
- *         data-edit="{{ path('BESomething') }}"
  *    >
  *        <label>{{ _('Title') }}:</label>
- *
- *        <span class="add-button-label-slot">{{ _('Add') }}</span>
  *
  *        <div class="new-item-input-slot">
  *            <div class="locale" lang="da">
@@ -43,14 +41,26 @@
  *
  * @example JS
  *    $('.dropdown-input-for-something').obbDropdownInput({
+ *			// Provide URLs when not specified through data-attributes
  *			ajaxUrls: {
- *				addItem: {{ path('BEItemAdd') }}
- *				deleteItem: {{ path('BEItemDelete') }}
- *				editItem: {{ path('BEItemEdit') }}
- *				searchItem: {{ path('BEItemSearch') }}
+ *				editItem: '/item',
+ *				addItem: '/item/add',
+ *				deleteItem: '/item/delete',
+ *				searchItem: '/item/search',
  *			},
+ *			// Provide dependencies that are not available in `window`
+ *			dependencies: {
+ *				bootbox: require('bootbox'),
+ *				lodash: require('lodash'),
+ *			},
+ *			translations: {
+ *				add: _('Add'),
+ *				confirmDelete: _('Are you sure to delete it?'),
+ *			}
  * 	  );
  */
+var _, bootbox;
+
 $.widget('gp.obbDropdownInput', {
 
 	options: {
@@ -65,6 +75,14 @@ $.widget('gp.obbDropdownInput', {
 		responseCallbacks: {
 			addSuccess: _.noop,
 			deleteSuccess: _.noop,
+		},
+		dependencies: {
+			bootbox: window.bootbox,
+			lodash: window.lodash,
+		},
+		translations: {
+			add: 'Add',
+			confirmDelete: 'Are you sure to delete it?',
 		},
 	},
 
@@ -129,6 +147,9 @@ $.widget('gp.obbDropdownInput', {
 		options.ajaxUrls.deleteItem = options.ajaxUrls.deleteItem || $container.data('delete');
 		options.ajaxUrls.editItem = options.ajaxUrls.editItem || $container.data('edit');
 		options.ajaxUrls.searchItem = options.ajaxUrls.searchItem || $container.data('search');
+
+		_ = options.dependencies.lodash;
+		bootbox = options.dependencies.bootbox;
 
 		var $dropdown = $(
 			'<span class="dropdown">'
@@ -317,7 +338,7 @@ $.widget('gp.obbDropdownInput', {
 
 				var $delete = $(this);
 
-				bootbox.confirm(textSureToDelete, function(okDelete) {
+				bootbox.confirm(widget.options.translations.confirmDelete, function(okDelete) {
 
 					if (!okDelete) {
 						return;
@@ -360,6 +381,20 @@ $.widget('gp.obbDropdownInput', {
 	},
 
 	/**
+	 * Set focus on the input field
+	 * @private
+	 */
+	_focusInput: function() {
+
+		// Timeout is required after toggling the dropdown
+		// because the Bootstrap dropdown plugin sets the focus
+		// on a dropdown item within the current call stack
+		window.setTimeout(function() {
+			widget.$input.focus();
+		});
+	},
+
+	/**
 	 * Setup event handlers for tab title input field
 	 * @private
 	 */
@@ -373,11 +408,7 @@ $.widget('gp.obbDropdownInput', {
 			.on('click', function inputClickHandler() {
 
 				widget._filterList();
-
-				// Let dropdown open and then refocus the input field
-				setTimeout(function() {
-					widget.$input.focus();
-				}, 0);
+				widget._focusInput();
 			})
 
 			.on('keypress', function inputKeypressHandler(event) {
@@ -453,11 +484,17 @@ $.widget('gp.obbDropdownInput', {
 		widget.$inputSearchEraseButton.on('click', function inputClearClickHandler() {
 
 			if (widget.$inputSearchEraseButton.is('.glyphicon-erase')) {
+
 				widget._clearInput();
+
+				// This button triggers the Bootstrap dropdown plugin toggle event
+				// thus we need to open it after the current call stack
+				window.setTimeout(function() {
+					widget._showDropdown();
+				})
 			}
 
-			// No need to open dropdown as this button is marked as dropdown-toggle button
-			setTimeout(function() { widget.$input.focus(); });
+			widget._focusInput();
 		});
 	}
 	,
@@ -478,10 +515,7 @@ $.widget('gp.obbDropdownInput', {
 
 			widget.$dropdownToggle.dropdown('toggle');
 			widget.formerId = widget._getActiveId();
-
-			// Timeout is required because the Bootstrap dropdown plugin
-			// sets the focus on a dropdown item within curing call stack
-			setTimeout(function() { widget.$input.focus(); });
+			widget._focusInput();
 		}
 	}
 	,
