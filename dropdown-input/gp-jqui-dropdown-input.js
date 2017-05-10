@@ -177,6 +177,7 @@ $.widget('gp.obbDropdownInput', {
 		;
 
 		$newItemAddButton.html($addButtonLabelSlot.html() || 'Add');
+		$addButtonLabelSlot.remove();
 
 		$newItemInput.toggleClass('form-control', !isMultipleInputs);
 
