@@ -386,6 +386,8 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_focusInput: function() {
 
+		var widget = this;
+
 		// Timeout is required after toggling the dropdown
 		// because the Bootstrap dropdown plugin sets the focus
 		// on a dropdown item within the current call stack
