@@ -12,9 +12,9 @@ Run a simple web server that will serve the `demo.html`
 Content that should be a part of a nested markup is specified in the so called slots (transcluded content in terms of Angular).
 Namely:
 
-- `<dropdown-toggle-prepend-slot>` Replace content in the dropdown toggle
-- `<new-item-input-slot>` Single or multiple (multilingual) input fields for New item title
-- `<add-button-label-slot>` Label for the **Add** new item button
+- `<dropdown-toggle slot>` Replace content in the dropdown toggle
+- `<new-item-input slot>` Single or multiple (multilingual) input fields for New item title
+- `<add-button-label slot>` Label for the **Add** new item button
 
 Contents of the dropdown menu toggle button and the New item form elements 
 

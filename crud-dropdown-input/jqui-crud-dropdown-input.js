@@ -25,7 +25,7 @@
  *    >
  *        <label>{{ _('Title') }}:</label>
  *
- *        <new-item-input-slot>
+ *        <new-item-input slot>
  *            <div class="locale" lang="da">
  *                <i class="be-flag-dk"></i>
  *                <input type="text" name="item[da]" lang="da" placeholder="New item">
@@ -34,7 +34,7 @@
  *                <i class="be-flag-en"></i>
  *                <input type="text" name="item[en]" lang="en" placeholder="New item">
  *            </div>
- *        </new-item-input-slot>
+ *        </new-item-input>
  *
  *        <input type="hidden" value="1" name="item">
  *   </div>
@@ -65,9 +65,9 @@
 var _, $, bootbox;
 
 if (typeof module === 'object' && module.exports) {
-	bootbox = require('bootbox');
 	_ = require('lodash');
 	$ = require('jquery');
+	bootbox = require('bootbox');
 }
 
 $.widget('gp.crudDropdownInput', {
@@ -187,9 +187,9 @@ $.widget('gp.crudDropdownInput', {
 		);
 
 		// Transclusion slots
-		var $dropdownToggleSlot = $container.find('> dropdown-toggle-slot');
-		var $newItemInputSlot = $container.find('> new-item-input-slot');
-		var $addButtonLabelSlot = $container.find('> add-button-label-slot');
+		var $dropdownToggleSlot = $container.find('> dropdown-toggle');
+		var $newItemInputSlot = $container.find('> new-item-input');
+		var $addButtonLabelSlot = $container.find('> add-button-label');
 
 		var $label = $container.find('> label:first-child');
 		var $newItemInput = $newItemInputSlot.find('input[type="text"]');

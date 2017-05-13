@@ -13,9 +13,9 @@
 
 	<div class="form-group gp-crud-dropdown-input crud-foobar">
 		<label> Items: </label>
-		<new-item-input-slot>
+		<new-item-input slot>
 			<input type="text" class="form-control" placeholder="New item">
-		</new-item-input-slot>
+		</new-item-input>
 		<input type="hidden" value="1" name="item">
 	</div>
 
@@ -48,7 +48,7 @@
 		data-search="/foobar/search"
 	>
 		<label> Multilingual titles: </label>
-		<new-item-input-slot>
+		<new-item-input slot>
 			<div class="form-group">
 				<label>EN:</label>
 				<input type="text" class="form-control" name="item[en]" lang="en" placeholder="English title">
@@ -57,7 +57,7 @@
 				<label>DA:</label>
 				<input type="text" class="form-control" name="item[da]" lang="da" placeholder="Danish title">
 			</div>
-		</new-item-input-slot>
+		</new-item-input>
 		<input type="hidden" name="item">
 	</div>
 	<ul class="nav nav-pills">
@@ -86,17 +86,17 @@
 
 	<p class="lead">Wishlist</p>
 	<div class="gp-crud-dropdown-input crud-wishlist inline">
-		<dropdown-toggle-slot>
+		<dropdown-toggle slot>
 			<button class="btn btn-default">
 				<i class="glyphicon glyphicon-heart"></i>
 			</button>
-		</dropdown-toggle-slot>
-		<new-item-input-slot>
+		</dropdown-toggle>
+		<new-item-input slot>
 			<input type="text" class="form-control" placeholder="New item">
-		</new-item-input-slot>
-		<add-button-label-slot>
+		</new-item-input>
+		<add-button-label slot>
 			<i class="glyphicon glyphicon-plus"></i>
-		</add-button-label-slot>
+		</add-button-label>
 		<input type="hidden" value="1" name="item">
 	</div>
 	<br>
