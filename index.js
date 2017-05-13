@@ -1,1 +1,1 @@
-require('./dropdown-input');
+require('./crud-dropdown-input');

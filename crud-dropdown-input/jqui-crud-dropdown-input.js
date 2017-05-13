@@ -13,19 +13,19 @@
  * The hidden input is required, it will contain selected value
  */
 /**
- * @namespace gp.obbDropdownInput
+ * @namespace gp.crudDropdownInput
  *
  * @example HTML
  *    <div
- *         class="gp-dropdown-input dropdown-input-for-something"
- *         data-edit="{{ path('BESomething') }}"
- *         data-add="{{ path('BESomethingNewAjax') }}"
- *         data-delete="{{ path('BESomethingDeleteAjax') }}"
- *         data-search="{{ path('BESomethingSearchAjax') }}"
+ *         class="gp-crud-dropdown-input crud-dropdown-input-for-foobar"
+ *         data-edit="{{ path('BEFoobar') }}"
+ *         data-create="{{ path('BEFoobarNewAjax') }}"
+ *         data-delete="{{ path('BEFoobarDeleteAjax') }}"
+ *         data-search="{{ path('BEFoobarSearchAjax') }}"
  *    >
  *        <label>{{ _('Title') }}:</label>
  *
- *        <div class="new-item-input-slot">
+ *        <new-item-input-slot>
  *            <div class="locale" lang="da">
  *                <i class="be-flag-dk"></i>
  *                <input type="text" name="item[da]" lang="da" placeholder="New item">
@@ -34,19 +34,22 @@
  *                <i class="be-flag-en"></i>
  *                <input type="text" name="item[en]" lang="en" placeholder="New item">
  *            </div>
- *        </div>
+ *        </new-item-input-slot>
  *
- *        <input type="hidden" value="1" name="item" required="required">
+ *        <input type="hidden" value="1" name="item">
  *   </div>
  *
  * @example JS
- *    $('.dropdown-input-for-something').obbDropdownInput({
+ *    $('.crud-dropdown-input-for-foobar').crudDropdownInput({
  *			// Provide URLs when not specified through data-attributes
- *			ajaxUrls: {
- *				editItem: '/item',
- *				addItem: '/item/add',
- *				deleteItem: '/item/delete',
- *				searchItem: '/item/search',
+ *			urls: {
+ *				edit: '/item/',
+ *				ajaxCreate: '/item/new',
+ *				ajaxDelete: '/item/delete',
+ *				ajaxSearch: '/item/search',
+ *			},
+ *			ajaxSelectRequestPayload: {
+ *				productId: 3,
  *			},
  *			// Provide dependencies that are not available in `window`
  *			dependencies: {
@@ -67,21 +70,31 @@ if (typeof module === 'object' && module.exports) {
 	$ = require('jquery');
 }
 
-$.widget('gp.obbDropdownInput', {
+$.widget('gp.crudDropdownInput', {
 
 	options: {
-		ajaxUrls: {
-			addItem: null,
-			deleteItem: null,
-			editItem: null,
-			searchItem: null,
+
+		urls: {
+			edit: null,
+			ajaxCreate: null,
+			ajaxDelete: null,
+			ajaxSearch: null,
+			ajaxSelect: null,
 		},
-		addItemPayloadDataKey: 'newItem',
-		deleteRequestPayload: {},
+		ajaxSearchQuery: '*',
+		ajaxCreateRequestDataKey: 'newItem',
+		ajaxDeleteRequestPayload: {},
+		ajaxSelectRequestPayload: {},
+
+		createCallback: _.noop,
+		initCallback: _.noop,
 		responseCallbacks: {
 			addSuccess: _.noop,
 			deleteSuccess: _.noop,
+			searchSuccess: _.noop,
+			selectSuccess: _.noop,
 		},
+
 		translations: {
 			add: 'Add',
 			confirmDelete: 'Are you sure to delete it?',
@@ -102,6 +115,7 @@ $.widget('gp.obbDropdownInput', {
 		listItemText: '.list-item-text',
 		listItemDelete: '.list-item-delete',
 		listItemEdit: '.list-item-edit',
+		listItemCheck: '.list-item-check',
 	},
 
 	listItems: [],
@@ -143,26 +157,23 @@ $.widget('gp.obbDropdownInput', {
 
 		var widget = this;
 		var options = this.options;
+		var urls = this.options.urls;
 		var $container = this.element;
 
-		options.ajaxUrls.addItem = options.ajaxUrls.addItem || $container.data('add');
-		options.ajaxUrls.deleteItem = options.ajaxUrls.deleteItem || $container.data('delete');
-		options.ajaxUrls.editItem = options.ajaxUrls.editItem || $container.data('edit');
-		options.ajaxUrls.searchItem = options.ajaxUrls.searchItem || $container.data('search');
+		options.urls.edit = urls.edit || $container.data('edit');
+		options.urls.ajaxCreate = urls.ajaxCreate || $container.data('create');
+		options.urls.ajaxDelete = urls.ajaxDelete || $container.data('delete');
+		options.urls.ajaxSearch = urls.ajaxSearch || $container.data('search');
 
 		var $dropdown = $(
-			'<span class="dropdown">'
-			+ '	<a href="#" class="dropdown-toggle" data-toggle="dropdown">'
+			'<div class="dropdown">'
+			+ '	<span class="dropdown-toggle" data-toggle="dropdown">'
 			+ '		<input type="text" class="form-control dropdown-toggle-input" autocomplete="off">'
-			+ '		<i class="glyphicon glyphicon-search"></i>'
-			+ '		<svg'
-			+ '			class="svg-loader"'
-			+ '			viewBox="0 0 32 32" width="32" height="32"'
-			+ '			style="display: none;"'
-			+ '		>'
+			+ '		<i class="glyphicon glyphicon-search search-erase-button"></i>'
+			+ '		<svg class="svg-loader" viewBox="0 0 32 32" width="32" height="32">'
 			+ '			<circle id="spinner" cx="16" cy="16" r="14" fill="none"></circle>'
 			+ '		</svg>'
-			+ '	</a>'
+			+ '	</span>'
 			+ '	<ul class="dropdown-menu">'
 			+ '		<li>'
 			+ '			<ul class="items-list"></ul>'
@@ -172,93 +183,121 @@ $.widget('gp.obbDropdownInput', {
 			+ '   		<button type="button" class="btn btn-primary btn-add"></button>'
 			+ '		</li>'
 			+ '	</ul>'
-			+ '</span>'
+			+ '</div>'
 		);
 
+		// Transclusion slots
+		var $dropdownToggleSlot = $container.find('> dropdown-toggle-slot');
+		var $newItemInputSlot = $container.find('> new-item-input-slot');
+		var $addButtonLabelSlot = $container.find('> add-button-label-slot');
+
 		var $label = $container.find('> label:first-child');
-		var $addButtonLabelSlot = $container.find('.add-button-label-slot');
-		var $newItemInputSlot = $container.find('.new-item-input-slot');
 		var $newItemInput = $newItemInputSlot.find('input[type="text"]');
 		var isMultipleInputs = $newItemInput.length > 1;
 
-		var $dropdownItemsList = $dropdown.find('.items-list');
-		var $dropdownToggle = $dropdown.find('.dropdown-toggle');
+		var $dropdownToggle = $dropdown.find('> .dropdown-toggle');
+		var $dropdownMenu = $dropdown.find('> .dropdown-menu');
 		var $dropdownToggleInput = $dropdown.find('.dropdown-toggle-input');
 		var $newItemFormGroup = $dropdown.find('.new-item-form-group');
 		var $newItemAddButton = $newItemFormGroup.find('.btn-add');
 
-		var $loader = $(
-		);
+		$container.append($dropdown);
 
-		$container
-			.append($dropdown)
-			.append($loader)
+		$newItemFormGroup
+			.prepend($newItemInputSlot.children())
+			.toggleClass('multiple-inputs', isMultipleInputs)
+			.toggleClass('single-input', !isMultipleInputs)
 		;
+
+		if ($dropdownToggleSlot.length) {
+			$dropdownToggle.empty().append($dropdownToggleSlot.children());
+		}
+
+		// remove empty elements
+		$newItemInputSlot.remove();
+		$dropdownToggleSlot.remove();
+
+		_.assign(widget, {
+			$container: $container,
+			$dropdown: $dropdown,
+
+			$dropdownToggle: $dropdownToggle,
+			$input: $dropdownToggle.find('input'),
+			$inputSearchEraseButton: $dropdownToggle.find('> .search-erase-button'),
+			$loader: $dropdownToggle.find('> .svg-loader'),
+
+			$dropdownMenu: $dropdownMenu,
+			$dropdownItemsList: $dropdownMenu.find('.items-list'),
+			$newTitleForm: $newItemFormGroup,
+			$newTitleFormDivider: $dropdownMenu.find('> .divider'),
+
+			$hiddenInput: $container.find('> input[type="hidden"]'),
+		});
 
 		$label.on('click', function() {
 			$dropdownToggleInput.trigger('focus');
 		});
 
-		$newItemFormGroup
-			.prepend($newItemInputSlot)
-			.toggleClass('multiple-inputs', isMultipleInputs)
-			.toggleClass('single-input', !isMultipleInputs)
-		;
-
-		$newItemAddButton.html($addButtonLabelSlot.html() || 'Add');
+		$newItemAddButton.html($addButtonLabelSlot.html() || options.translations.add);
 		$addButtonLabelSlot.remove();
-
-		$newItemInput.toggleClass('form-control', !isMultipleInputs);
-
-		_.assign(widget, {
-			$container: $container,
-			$dropdown: $dropdown,
-			$dropdownItemsList: $dropdownItemsList,
-			$dropdownToggle: $dropdownToggle,
-			$dropdownMenu: $dropdown.find('.dropdown-menu'),
-			$input: $dropdownToggle.find('input'),
-			$inputSearchEraseButton: $dropdownToggle.find('i'),
-			$loader: $dropdownToggle.find('.svg-loader'),
-			$newTitleForm: $dropdown.find('.new-item-form-group'),
-			$newTitleFormDivider: $dropdown.find('.divider'),
-			$hiddenInput: $container.find('input[type="hidden"]'),
-		});
 
 		widget._initList();
 		widget._initInput();
 		widget._buildNewTitleForm();
+
+		this.options.createCallback(this);
+	},
+
+	/**
+	 * Widget initialization/reinitialization
+	 * @private
+	 * @description
+	 * Widgets have the concept of initialization that is distinct from creation.
+	 * Any time the plugin is called with no arguments or with only an option hash,
+	 * the widget is initialized; this includes when the widget is created.
+	 *
+	 * Note: Initialization should only be handled if there is a logical action
+	 */
+	_init: function() {
+
+		this.options.initCallback(this);
 	},
 
 	/**
 	 * Fetch tab titles from server or return existing
 	 * @returns {Promise}
 	 */
-	getListItemsPromise: function() {
+	getListItemsAjaxPromise: function() {
 
 		var widget = this;
-		var ajaxUrls = this.options.ajaxUrls;
+		var urls = this.options.urls;
+		var promise;
 
 		if (widget.listItems.length) {
 
-			return new Promise(function(resolve) {
-				resolve(widget.listItems);
-			});
+			promise = $.Deferred().resolve(widget.listItems);
+
+		} else {
+
+			promise = $
+				.ajax({
+					url: urls.ajaxSearch,
+					data: {q: widget.options.ajaxSearchQuery},
+					dataType: 'json', // for response
+				})
+				.done(function ajaxSearchSuccess(data) {
+
+					return data;
+				})
+			;
 		}
-		else {
-			return $
-				.getJSON(
-					ajaxUrls.searchItem,
-					{q: '*'},
-					function(data) {
-						return widget.listItems = data;
-					}
-				)
-				.promise();
-		}
+
+		return promise;
 	},
 
 	/**
-	 * Reinitialize titles in dropdown
+	 * Reinitialize titles in the dropdown
+	 * Remove all list items and fetch fresh data from the server
 	 * @param {Promise} [listItemsPromise]
 	 * @return {Promise}
 	 */
@@ -267,7 +306,6 @@ $.widget('gp.obbDropdownInput', {
 		var widget = this;
 
 		widget.listItems = [];
-		widget.$dropdown.find(widget.selectors.listItem).remove();
 
 		return widget._initList(listItemsPromise);
 	},
@@ -282,32 +320,41 @@ $.widget('gp.obbDropdownInput', {
 
 		var widget = this;
 
-		listItemsPromise = listItemsPromise || widget.getListItemsPromise();
+		listItemsPromise = listItemsPromise || widget.getListItemsAjaxPromise();
 
-		listItemsPromise.then(function(listItems) {
+		listItemsPromise.then(function ajaxGetListItemsSuccess(listItems) {
+
+			widget.listItems = listItems;
 
 			var options = widget.options;
-			var ajaxUrls = widget.options.ajaxUrls;
-			var callbacks = widget.options.responseCallbacks;
-			var keycodes = widget.keycodes;
 			var selectors = widget.selectors;
+			var urls = options.urls;
+			var responseCallbacks = options.responseCallbacks;
 
 			var listItemClass = _.trimStart(selectors.listItem, '.');
 			var listItemTextClass = _.trimStart(selectors.listItemText, '.');
-			var listItemDeleteClass = _.trimStart(selectors.listItemDelete, '.');
+			var listItemCheckClass = _.trimStart(selectors.listItemCheck, '.');
 			var listItemEditClass = _.trimStart(selectors.listItemEdit, '.');
+			var listItemDeleteClass = _.trimStart(selectors.listItemDelete, '.');
 			var $listItems = $();
 
 			// Add list item for each title
-			listItems.forEach(function(tabTitle) {
+			listItems.forEach(function listItemIterator(tabTitle) {
 
 				$listItems = $listItems.add(
-					'<li class="' + listItemClass + '" data-id="' + tabTitle.id + '">'
+					'<li'
+					+ '		class="' + listItemClass + '"'
+					+ '		data-id="' + tabTitle.id + '"'
+					+ '>'
 					+ '	<a href="#" class="' + listItemTextClass + '">'
 					+ '		' + tabTitle.name
 					+ '	</a>'
-					+ '	<a class="' + listItemEditClass + '" title="Edit"'
-					+ ' 	href="' + ajaxUrls.editItem + tabTitle.id + '/"'
+					+ '	<a href="#" class="' + listItemCheckClass + '">'
+					+ '		<i class="glyphicon glyphicon-ok"></i>'
+					+ '	</a>'
+					+ '	<a class="' + listItemEditClass + '"'
+					+ '		title="Edit"'
+					+ ' 	href="' + urls.edit + tabTitle.id + '/"'
 					+ '		target="_blank"'
 					+ '	>'
 					+ '		<i class="glyphicon glyphicon-pencil"></i>'
@@ -319,15 +366,19 @@ $.widget('gp.obbDropdownInput', {
 				);
 			});
 
-			widget.$dropdownItemsList.prepend($listItems);
-
-			var $deleteButtons = $listItems.find(selectors.listItemDelete);
-
+			widget.$dropdownItemsList.empty().append($listItems);
+			widget._updateInputValue();
+			widget._filterList();
 			widget._applyActiveItem();
+			responseCallbacks.searchSuccess(widget);
+
+			var $checkButtons = $listItems.find(selectors.listItemCheck);
+			var $deleteButtons = $listItems.find(selectors.listItemDelete);
 
 			// Select title from dropdown
 			$listItems.on('click', function listItemClickHandler(event) {
 
+				const $listItem = $(this);
 				const $link = $(event.target).closest('a');
 				const linkHref = $link.attr('href');
 
@@ -336,15 +387,25 @@ $.widget('gp.obbDropdownInput', {
 					event.preventDefault();
 				}
 
-				widget._selectListItem($(this));
+				widget._selectListItem($listItem);
 				widget.$input.focus();
 				widget._hideDropdown();
 			});
 
+			// Unselect an item
+			$checkButtons.on('click', function checkClickHandler() {
+
+				widget._selectListItem(null);
+				event.stopPropagation();
+			});
+
 			// Delete title from dropdown
-			$deleteButtons.on('click', function deleteItemClickHandler() {
+			$deleteButtons.on('click', function deleteClickHandler(event) {
 
 				var $delete = $(this);
+
+				// Prevent item selection
+				event.stopPropagation();
 
 				bootbox.confirm(widget.options.translations.confirmDelete, function(okDelete) {
 
@@ -357,16 +418,17 @@ $.widget('gp.obbDropdownInput', {
 
 					var requestPayload = _.assign(
 						{id: id},
-						options.deleteRequestPayload
+						options.ajaxDeleteRequestPayload
 					);
 
+					$listItem.remove();
 					widget.$inputSearchEraseButton.hide();
 					widget.$loader.show();
 
 					$
 						.ajax({
 							type: 'POST',
-							url: options.ajaxUrls.deleteItem,
+							url: urls.ajaxDelete,
 							data: requestPayload,
 						})
 						.done(function ajaxDeleteSuccess(response) {
@@ -377,7 +439,7 @@ $.widget('gp.obbDropdownInput', {
 
 								widget._clearInput();
 
-								callbacks.deleteSuccess(widget, promise);
+								responseCallbacks.deleteSuccess(widget, promise);
 
 							} else {
 								bootbox.alert(response.message);
@@ -420,6 +482,7 @@ $.widget('gp.obbDropdownInput', {
 		var widget = this;
 		var keycodes = this.keycodes;
 
+		console.log(widget.$input);
 		widget.$input
 
 			.on('click', function inputClickHandler() {
@@ -449,6 +512,7 @@ $.widget('gp.obbDropdownInput', {
 
 				// Close dropdown on Esc key
 				if (event.which === keycodes.esc) {
+					debugger;
 					widget._hideDropdown({restoreFormerValue: true});
 					return;
 				}
@@ -533,7 +597,7 @@ $.widget('gp.obbDropdownInput', {
 		if (!widget._isDropdownOpen()) {
 
 			widget.$dropdownToggle.dropdown('toggle');
-			widget.formerId = widget._getActiveId();
+			widget.formerId = widget.getActiveId();
 			widget._focusInput();
 		}
 	},
@@ -584,11 +648,24 @@ $.widget('gp.obbDropdownInput', {
 
 	/**
 	 * Get active value's id
-	 * @private
 	 * @returns {number}
 	 */
-	_getActiveId: function() {
+	getActiveId: function() {
 		return Number(this.$hiddenInput.val());
+	},
+
+	/**
+	 * Get active value's id
+	 * @returns {number}
+	 */
+	getActiveText: function() {
+
+		var widget = this;
+
+		var $activeListItem = widget._getActiveListItem();
+		var $activeListItemLabel = $activeListItem.find(widget.selectors.listItemText);
+
+		return $activeListItemLabel.text().trim();
 	},
 
 	/**
@@ -607,10 +684,7 @@ $.widget('gp.obbDropdownInput', {
 	 */
 	_getActiveListItem: function() {
 
-		var widget = this;
-
-		var listItemSelector = widget.selectors.listItem;
-		var $listItems = widget.$container.find(listItemSelector);
+		var $listItems = this.$dropdownItemsList.children();
 
 		var $activeListItem = $listItems.filter(function() {
 			return $(this).is('.active');
@@ -627,9 +701,8 @@ $.widget('gp.obbDropdownInput', {
 
 		var widget = this;
 
-		var activeId = widget._getActiveId();
-		var listItemSelector = widget.selectors.listItem;
-		var $listItems = widget.$container.find(listItemSelector);
+		var activeId = widget.getActiveId();
+		var $listItems = widget.$dropdownItemsList.children();
 
 		$listItems.each(function() {
 
@@ -648,11 +721,14 @@ $.widget('gp.obbDropdownInput', {
 
 		var widget = this;
 
-		// Update the input field with active item title
-		widget._updateInputValue();
+		if (widget.$input.length) {
 
-		// Toggles search/erase icon
-		widget._toggleSearchIcon();
+			// Update the input field with active item title
+			widget._updateInputValue();
+
+			// Toggles search/erase icon
+			widget._toggleSearchIcon();
+		}
 
 		// Mark selected list item with `active` class
 		widget._markActiveListItem();
@@ -666,7 +742,7 @@ $.widget('gp.obbDropdownInput', {
 
 		var widget = this;
 
-		var activeId = widget._getActiveId();
+		var activeId = widget.getActiveId();
 		var currentTitle = '';
 
 		widget.listItems.forEach(function(tabTitle) {
@@ -688,22 +764,27 @@ $.widget('gp.obbDropdownInput', {
 	_filterList: function() {
 
 		var widget = this;
+
+		if (!widget.$input.length) {
+			return;
+		}
+
 		var query = widget.$input.val();
 		var $matchedEls = widget._matchInputActiveTitle(query);
 
 		// Show only items that matches query from the input field
 		widget._hideTitleEls();
-		$matchedEls.show();
+		$matchedEls.removeClass('hidden');
 
 		var $active = widget._getActiveListItem();
 
 		// Hide the New title form when there is a title with exact match
 		widget.$newTitleForm.toggle(!$active.length);
-		widget.$newTitleFormDivider.toggle(!$active.length);
+		widget.$newTitleFormDivider.toggleClass('hidden', !!$active.length);
 
 		// Hide divider when there are no matching titles
 		if (!$matchedEls.length) {
-			widget.$newTitleFormDivider.hide();
+			widget.$newTitleFormDivider.addClass('hidden');
 		}
 
 		widget._markActiveListItem();
@@ -716,22 +797,46 @@ $.widget('gp.obbDropdownInput', {
 	 * @private
 	 */
 	_hideTitleEls: function() {
-		this.$container.find(this.selectors.listItem).hide();
+		this.$dropdownItemsList.children().addClass('hidden');
 	},
 
 	/**
 	 * Actions on item activation
 	 * @private
-	 * @param {jQuery} $selectedListItem
+	 * @param {jQuery|null} $selectedListItem
 	 */
 	_selectListItem: function($selectedListItem) {
 
 		var widget = this;
+		var options = this.options;
+		var urls = this.options.urls;
+
+		var selectedId = $($selectedListItem).data('id');
 
 		// Set active id to the hidden input field
-		widget._setActiveId($selectedListItem.data('id'));
+		widget._setActiveId(selectedId);
 
 		widget._applyActiveItem();
+
+		if (urls.ajaxSelect) {
+
+			var requestPayload = _.assign(
+				{id: selectedId},
+				options.ajaxSelectRequestPayload
+			);
+
+			$
+				.ajax({
+					type: 'POST',
+					url: urls.ajaxSelect,
+					data: requestPayload,
+				})
+				.done(function ajaxSelectSuccess() {
+
+					widget.options.responseCallbacks.selectSuccess(widget);
+				})
+			;
+		}
 	},
 
 	/**
@@ -750,8 +855,9 @@ $.widget('gp.obbDropdownInput', {
 	},
 
 	/**
-	 * Find matching tab titles in list (case-insensitive)
-	 * set active id and mark list item with active class
+	 * Find matching titles in the list (case-insensitive)
+	 * Set active id in the hidden input field
+	 * and mark list item with active class
 	 *
 	 * @private
 	 * @param {string} term
@@ -762,7 +868,7 @@ $.widget('gp.obbDropdownInput', {
 		var widget = this;
 		var selectors = this.selectors;
 
-		var $listItems = widget.$container.find(selectors.listItem);
+		var $listItems = widget.$dropdownItemsList.children();
 		var matchingId = null;
 
 		var $matching = $listItems.filter(function() {
@@ -794,9 +900,9 @@ $.widget('gp.obbDropdownInput', {
 
 		var widget = this;
 		var options = this.options;
-		var callbacks = this.options.responseCallbacks;
+		var responseCallbacks = this.options.responseCallbacks;
 		var keycodes = this.keycodes;
-		var ajaxUrls = this.options.ajaxUrls;
+		var urls = this.options.urls;
 
 		var $newTitleInputs = widget.$newTitleForm.find('input');
 		var $newTitleAddButton = widget.$newTitleForm.find('.btn-add');
@@ -839,16 +945,16 @@ $.widget('gp.obbDropdownInput', {
 
 			var requestPayload = {};
 
-			requestPayload[options.addItemPayloadDataKey] = data;
+			requestPayload[options.ajaxCreateRequestDataKey] = data;
 
 			$
 				.ajax({
 					type: 'POST',
-					url: ajaxUrls.addItem,
+					url: urls.ajaxCreate,
 					data: requestPayload,
 					dataType: 'json', // for response
 				})
-				.done(function ajaxAddItemSuccess(response) {
+				.done(function ajaxCreateSuccess(response) {
 
 					if (response.success) {
 
@@ -857,26 +963,18 @@ $.widget('gp.obbDropdownInput', {
 						widget.$input.val(response.name);
 						widget._setActiveId(response.id);
 
-						callbacks.addSuccess(widget, promise);
+						responseCallbacks.addSuccess(widget, promise);
 					}
 					else {
 						bootbox.alert(response.message);
 					}
 				})
-				.always(function ajaxAddItemFinally() {
+				.always(function ajaxCreateFinally() {
 					$button.removeClass('disabled');
 					widget.$inputSearchEraseButton.show();
 					widget.$loader.hide();
 				})
 			;
 		});
-	},
-
-	/**
-	 * Widget-specific cleanup
-	 * @private
-	 */
-	_destroy: function() {
-		this.$container.find(selectors.listItem).remove();
 	},
 });

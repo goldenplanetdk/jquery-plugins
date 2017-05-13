@@ -1,4 +1,4 @@
-.gp-dropdown-input {
+.gp-crud-dropdown-input {
 
 	@icon-horizontal-padding: 10px;
 	@item-height: 30px;
@@ -21,6 +21,13 @@
 			background: darken(@dropdown-link-hover-bg, 2%);
 		}
 
+		&:not(.active) {
+
+			.list-item-check {
+				display: none;
+			}
+		}
+
 		.list-item-text,
 		.list-item-edit,
 		.list-item-delete {
@@ -36,8 +43,7 @@
 			flex-grow: 1;
 			min-width: 0;
 			padding: 5px @icon-horizontal-padding;
-			overflow: hidden;
-			text-overflow: ellipsis;
+			.text-overflow();
 			color: @text-color;
 
 			&:hover,
@@ -46,10 +52,14 @@
 			}
 		}
 
-		.list-item-edit {
+		.list-item-check,
+		.list-item-edit,
+		.list-item-delete {
 			padding: 5px @icon-horizontal-padding;
 			color: @gray-light;
+		}
 
+		.list-item-edit {
 			&:hover,
 			&:focus {
 				color: @link-hover-color;
@@ -57,9 +67,6 @@
 		}
 
 		.list-item-delete {
-			padding: 5px @icon-horizontal-padding;
-			color: @gray-light;
-
 			&:hover,
 			&:focus {
 				color: @brand-danger;

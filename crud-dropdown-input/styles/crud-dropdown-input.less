@@ -1,0 +1,41 @@
+.gp-crud-dropdown-input {
+
+	// Hide at page load the markup that will be moved to the dropdown menu
+	> [class$="-slot"] {
+		display: none;
+	}
+
+	.dropdown {
+		position: relative;
+		max-width: @gp-crud-dropdown-max-width;
+
+		.inline& {
+			display: inline-block;
+		}
+
+		.dropdown-menu {
+			min-width: @gp-crud-dropdown-menu-min-width;
+			right: 0;
+		}
+
+		.dropdown-toggle {
+			cursor: pointer;
+			display: inline-block;
+			width: 100%;
+
+			input {
+				width: 100%;
+				padding-right: @gp-crud-dropdown-input-padding-right;
+			}
+
+			> .search-erase-button,
+			> .svg-loader {
+				position: absolute;
+				right: @gp-crud-dropdown-input-icon-position-right;
+				top: 50%;
+				transform: translateY(-50%);
+			}
+		}
+	}
+}
+

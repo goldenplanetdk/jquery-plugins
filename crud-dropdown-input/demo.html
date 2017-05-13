@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Dropdown Input jQuer UI widget Demo</title>
+
+	<link rel="stylesheet/less" href="demo/demo.less">
+
+	<script>window.less = {env: 'development'}</script>
+	<script src="//cdn.jsdelivr.net/npm/less@2.7.2/dist/less.js"></script>
+</head>
+<body>
+
+	<div class="form-group gp-crud-dropdown-input crud-foobar">
+		<label> Items: </label>
+		<new-item-input-slot>
+			<input type="text" class="form-control" placeholder="New item">
+		</new-item-input-slot>
+		<input type="hidden" value="1" name="item">
+	</div>
+
+	<ul class="nav nav-pills">
+		<li><a href="#foobarNotes" data-toggle="tab">Notes</a></li>
+		<li><a href="#foobarCode" data-toggle="tab">Code</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane" id="foobarNotes">
+			<ul>
+				<li>URLs are specified in JS</li>
+				<li>Item with id <code>1</code> is preselected</li>
+			</ul>
+		</div>
+		<div class="tab-pane" id="foobarCode">
+			<ul>
+				<li>See HTML by observing source of this page</li>
+				<li>See initialization code in <a href="demo/index.js" target="_blank">demo/index.js</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<hr>
+
+	<div
+		class="form-group gp-crud-dropdown-input crud-i18n"
+		data-edit="/foobar/"
+		data-create="/foobar/new"
+		data-delete="/foobar/delete"
+		data-search="/foobar/search"
+	>
+		<label> Multilingual titles: </label>
+		<new-item-input-slot>
+			<div class="form-group">
+				<label>EN:</label>
+				<input type="text" class="form-control" name="item[en]" lang="en" placeholder="English title">
+			</div>
+			<div class="form-group">
+				<label>DA:</label>
+				<input type="text" class="form-control" name="item[da]" lang="da" placeholder="Danish title">
+			</div>
+		</new-item-input-slot>
+		<input type="hidden" name="item">
+	</div>
+	<ul class="nav nav-pills">
+		<li><a href="#i18nNotes" data-toggle="tab">Notes</a></li>
+		<li><a href="#i18nCode" data-toggle="tab">Code</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane" id="i18nNotes">
+			<ul>
+				<li>URLs are specified in data-attributes</li>
+				<li>Translated to Danish</li>
+				<li>Multiple inputs in dropdown for multilingual titles</li>
+				<li>Removed <code>form-control</code> class from the input field</li>
+			</ul>
+		</div>
+		<div class="tab-pane" id="i18nCode">
+			<ul>
+				<li>See HTML by observing source of this page</li>
+				<li>See initialization code in <a href="demo/index.js" target="_blank">demo/index.js</a></li>
+				<li>See customized styles in <code>demo/demo.less</code></li>
+			</ul>
+		</div>
+	</div>
+
+	<hr>
+
+	<p class="lead">Wishlist</p>
+	<div class="gp-crud-dropdown-input crud-wishlist inline">
+		<dropdown-toggle-slot>
+			<button class="btn btn-default">
+				<i class="glyphicon glyphicon-heart"></i>
+			</button>
+		</dropdown-toggle-slot>
+		<new-item-input-slot>
+			<input type="text" class="form-control" placeholder="New item">
+		</new-item-input-slot>
+		<add-button-label-slot>
+			<i class="glyphicon glyphicon-plus"></i>
+		</add-button-label-slot>
+		<input type="hidden" value="1" name="item">
+	</div>
+	<br>
+	<p>The product is in: <strong id="activeWishlist"></strong></p>
+	<br>
+	<ul class="nav nav-pills">
+		<li><a href="#wishlistNotes" data-toggle="tab">Notes</a></li>
+		<li><a href="#wishlistCode" data-toggle="tab">Code</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane" id="wishlistNotes">
+			<ul>
+				<li>Using the optional <code>ajaxSelect</code> callback to set active item on the server</li>
+				<li>Providing content for all available slots (transcluded content)</li>
+			</ul>
+		</div>
+		<div class="tab-pane" id="wishlistCode">
+			<ul>
+				<li>See HTML by observing source of this page</li>
+				<li>See initialization code in <a href="demo/index.js" target="_blank">demo/index.js</a></li>
+			</ul>
+		</div>
+	</div>
+
+
+	<hr>
+
+	<script src="//cdn.jsdelivr.net/npm/jquery@2.2.3/dist/jquery.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/jquery-ui-dist@1.12.1/jquery-ui.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/jquery-mockjax@2.2.1/dist/jquery.mockjax.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/bootbox@4.4.0/bootbox.js"></script>
+	<script src="//cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.js"></script>
+
+	<script src="jqui-crud-dropdown-input.js"></script>
+	<script src="demo/brands.js"></script>
+	<script src="demo/server-mockjax.js"></script>
+	<script src="demo/server-mockjax-wishlist.js"></script>
+	<script src="demo/index.js"></script>
+</body>
+</html>
