@@ -18,18 +18,31 @@ Namely:
 
 Contents of the dropdown menu toggle button and the New item form elements 
 
-The `edit`, `search`, `add`, `delete` urls can be specified as data attributes or in widget options.
-The latter have higher priority. Full list of options:
+Following data can be specified both as data attributes or in widget options. The latter have higher priority. 
+
+- `data-edit`
+- `data-ajax-search`
+- `data-ajax-select`
+- `data-ajax-create`
+- `data-ajax-delete`
+- `data-multiple`
+- `data-hidden-input-name`
+
+Full list of options with default values:
 
 ```
 $('.crud-foobar').crudDropdownInput({
 
+    // 
+    isMultiple: false,
+
+    // URL value examples
 	urls: {
 		edit: '/foobar/',
-		ajaxCreate: '/foobar/add',
-		ajaxDelete: '/foobar/delete',
 		ajaxSearch: '/foobar/search',
 		ajaxSelect: '/foobar/select', // optional
+		ajaxCreate: '/foobar/add',
+		ajaxDelete: '/foobar/delete',
 	},
 	
     // Key name for the data in ajaxCreate request payload
@@ -38,7 +51,9 @@ $('.crud-foobar').crudDropdownInput({
 	
     // Additional data that will be added to the request payload
     // that by default will contain only the item's id, e.g. `{id: 5}`
+	ajaxSearchRequestPayload: {},
 	ajaxSelectRequestPayload: {},
+	ajaxCreateRequestPayload: {},
 	ajaxDeleteRequestPayload: {},
 	
 	// Invoked when the widget is created for the first time
@@ -49,9 +64,9 @@ $('.crud-foobar').crudDropdownInput({
 	// For every callback the widget instance 
 	// and an AJAX promise (with requested/resolved List Items) is provided
 	responseCallbacks: {
-		addSuccess: function(widget, promise) {},
-		deleteSuccess: function(widget, promise) {},
 		searchSuccess: function(widget) {},
+		createSuccess: function(widget, promise) {},
+		deleteSuccess: function(widget, promise) {},
 	},
 	
 	// Translations for Add button label and dialog text

@@ -2,18 +2,18 @@
 // by using the create/delete AJAX callbacks
 const ajaxCallback = function(widget, listItemsPromise) {
 
-	$('.gp-crud-dropdown-input').each(function() {
+	$('.crud-foobar, .crud-i18n').each(function() {
 
 		const widget = $(this).data('gp-crudDropdownInput');
 
 		// Prevent multiple requests by providing reference to a promise
-		widget.reinitList(listItemsPromise);
+		widget && widget.reinitList(listItemsPromise);
 	});
 
 };
 
 const responseCallbacks = {
-	addSuccess: ajaxCallback,
+	createSuccess: ajaxCallback,
 	deleteSuccess: ajaxCallback,
 };
 
@@ -21,9 +21,9 @@ $('.crud-foobar').crudDropdownInput({
 	ajaxCreateRequestDataKey: 'brand',
 	urls: {
 		edit: '/foobar/',
+		ajaxSearch: '/foobar/search',
 		ajaxCreate: '/foobar/new',
 		ajaxDelete: '/foobar/delete',
-		ajaxSearch: '/foobar/search',
 	},
 	responseCallbacks,
 });
@@ -44,10 +44,13 @@ $('.crud-wishlist').crudDropdownInput({
 	ajaxCreateRequestDataKey: 'wishlist',
 	urls: {
 		edit: '/wishlist/',
+		ajaxSearch: '/wishlist/search',
 		ajaxSelect: '/wishlist/select',
 		ajaxCreate: '/wishlist/new',
 		ajaxDelete: '/wishlist/delete',
-		ajaxSearch: '/wishlist/search',
+	},
+	ajaxRequestPayload: {
+		productId: 33,
 	},
 	responseCallbacks: {
 		searchSuccess: selectSuccess,
@@ -56,6 +59,13 @@ $('.crud-wishlist').crudDropdownInput({
 });
 
 function selectSuccess(widget) {
-	$('#activeWishlist').text(widget.getActiveId() + ': ' + widget.getActiveText());
+
+	const $activeWishlists = $('#activeWishlists').empty();
+	const activeIds = widget.getActiveIds();
+	const activeItemTitles = widget.getActiveTitles();
+
+	activeIds.forEach(function(id, index) {
+		$activeWishlists.append(`<li>${id}: ${activeItemTitles[index]}</li>`);
+	});
 }
 

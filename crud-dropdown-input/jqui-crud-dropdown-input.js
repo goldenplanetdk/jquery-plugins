@@ -18,11 +18,12 @@
  * @example HTML
  *    <div
  *         class="gp-crud-dropdown-input crud-dropdown-input-for-foobar"
- *         data-edit="{{ path('BEFoobar') }}"
- *         data-select="{{ path('BEFoobarSelectAjax') }}"
- *         data-create="{{ path('BEFoobarNewAjax') }}"
- *         data-delete="{{ path('BEFoobarDeleteAjax') }}"
- *         data-search="{{ path('BEFoobarSearchAjax') }}"
+ *         data-url-edit="{{ path('BEFoobar') }}"
+ *         data-url-ajax-search="{{ path('BEFoobarSearchAjax') }}"
+ *         data-url-ajax-select="{{ path('BEFoobarSelectAjax') }}"
+ *         data-url-ajax-create="{{ path('BEFoobarNewAjax') }}"
+ *         data-url-ajax-delete="{{ path('BEFoobarDeleteAjax') }}"
+ *         data-hidden-input-name="item"
  *    >
  *        <label>{{ _('Title') }}:</label>
  *
@@ -37,7 +38,7 @@
  *            </div>
  *        </new-item-input>
  *
- *        <input type="hidden" value="1" name="item">
+ *        <input type="hidden" name="item" value="1">
  *   </div>
  *
  * @example JS
@@ -45,11 +46,11 @@
  *			// Provide URLs when not specified through data-attributes
  *			urls: {
  *				edit: '/item/',
+ *				ajaxSearch: '/item/search',
  *				ajaxCreate: '/item/new',
  *				ajaxDelete: '/item/delete',
- *				ajaxSearch: '/item/search',
  *			},
- *			ajaxSelectRequestPayload: {
+ *			ajaxRequestPayload: {
  *				productId: 3,
  *			},
  *			// Provide dependencies that are not available in `window`
@@ -75,25 +76,31 @@ $.widget('gp.crudDropdownInput', {
 
 	options: {
 
+		isMultiple: null,
+
 		urls: {
 			edit: null,
-			ajaxCreate: null,
-			ajaxDelete: null,
 			ajaxSearch: null,
 			ajaxSelect: null,
+			ajaxCreate: null,
+			ajaxDelete: null,
 		},
 		ajaxSearchQuery: '*',
+		ajaxRequestPayload: null,
+		ajaxSearchRequestPayload: null,
+		ajaxSelectRequestPayload: null,
 		ajaxCreateRequestDataKey: 'newItem',
-		ajaxDeleteRequestPayload: {},
-		ajaxSelectRequestPayload: {},
+		ajaxCreateRequestPayload: null,
+		ajaxDeleteRequestPayload: null,
+		hiddenInputName: null,
 
 		createCallback: _.noop,
 		initCallback: _.noop,
 		responseCallbacks: {
-			addSuccess: _.noop,
-			deleteSuccess: _.noop,
 			searchSuccess: _.noop,
 			selectSuccess: _.noop,
+			createSuccess: _.noop,
+			deleteSuccess: _.noop,
 		},
 
 		translations: {
@@ -121,7 +128,7 @@ $.widget('gp.crudDropdownInput', {
 
 	listItems: [],
 
-	formerId: null,
+	formerIds: [],
 
 	/** @type {jQuery} */
 	$container: null,
@@ -143,8 +150,6 @@ $.widget('gp.crudDropdownInput', {
 	$newTitleFormDivider: null,
 	/** @type {jQuery} */
 	$loader: null,
-	/** @type {jQuery} */
-	$hiddenInput: null,
 
 	/**
 	 * Widget constructor
@@ -161,11 +166,17 @@ $.widget('gp.crudDropdownInput', {
 		var urls = this.options.urls;
 		var $container = this.element;
 
-		options.urls.edit = urls.edit || $container.data('edit');
-		options.urls.ajaxSelect = urls.ajaxSelect || $container.data('select');
-		options.urls.ajaxCreate = urls.ajaxCreate || $container.data('create');
-		options.urls.ajaxDelete = urls.ajaxDelete || $container.data('delete');
-		options.urls.ajaxSearch = urls.ajaxSearch || $container.data('search');
+		// Options that are specified in JS have higher priority than `data-*` attributes
+		options.urls.edit = urls.edit || $container.data('url-edit');
+		options.urls.ajaxSearch = urls.ajaxSearch || $container.data('url-ajax-search');
+		options.urls.ajaxSelect = urls.ajaxSelect || $container.data('url-ajax-select');
+		options.urls.ajaxCreate = urls.ajaxCreate || $container.data('url-ajax-create');
+		options.urls.ajaxDelete = urls.ajaxDelete || $container.data('url-ajax-delete');
+		options.hiddenInputName = options.hiddenInputName || $container.data('hidden-input-name');
+
+		if (_.isNil(options.isMultiple)) {
+			options.isMultiple = $container.is('[data-multiple]');
+		}
 
 		var $dropdown = $(
 			'<div class="dropdown">'
@@ -209,6 +220,20 @@ $.widget('gp.crudDropdownInput', {
 			.prepend($newItemInputSlot.children())
 			.toggleClass('multiple-inputs', isMultipleInputs)
 			.toggleClass('single-input', !isMultipleInputs)
+
+			/**
+			 * Select last list item when pressing Up key
+			 */
+			.find('input').first().on('keydown', function newItemInputKeydownHandler(event) {
+
+				if (event.which === widget.keycodes.up) {
+
+					widget.$dropdownItemsList.children().last()
+						.find(widget.selectors.listItemText + ':visible')
+						.focus()
+					;
+				}
+			})
 		;
 
 		if ($dropdownToggleSlot.length) {
@@ -232,8 +257,6 @@ $.widget('gp.crudDropdownInput', {
 			$dropdownItemsList: $dropdownMenu.find('.items-list'),
 			$newTitleForm: $newItemFormGroup,
 			$newTitleFormDivider: $dropdownMenu.find('> .divider'),
-
-			$hiddenInput: $container.find('> input[type="hidden"]'),
 		});
 
 		$label.on('click', function() {
@@ -281,10 +304,16 @@ $.widget('gp.crudDropdownInput', {
 
 		} else {
 
+			var requestPayload = _.assign(
+				{q: widget.options.ajaxSearchQuery},
+				widget.options.ajaxRequestPayload,
+				widget.options.ajaxSearchRequestPayload
+			);
+
 			promise = $
 				.ajax({
 					url: urls.ajaxSearch,
-					data: {q: widget.options.ajaxSearchQuery},
+					data: requestPayload,
 					dataType: 'json', // for response
 				})
 				.done(function ajaxSearchSuccess(data) {
@@ -324,11 +353,17 @@ $.widget('gp.crudDropdownInput', {
 
 		listItemsPromise = listItemsPromise || widget.getListItemsAjaxPromise();
 
-		listItemsPromise.then(function ajaxGetListItemsSuccess(listItems) {
+		listItemsPromise.then(function ajaxSearchSuccess(listItems) {
+
+			if (!_.isArray(listItems)) {
+				console.error('gp.crudDropdownInput: Response does not contain array of items', listItems);
+				return;
+			}
 
 			widget.listItems = listItems;
 
 			var options = widget.options;
+			var keycodes = widget.keycodes;
 			var selectors = widget.selectors;
 			var urls = options.urls;
 			var responseCallbacks = options.responseCallbacks;
@@ -341,22 +376,22 @@ $.widget('gp.crudDropdownInput', {
 			var $listItems = $();
 
 			// Add list item for each title
-			listItems.forEach(function listItemIterator(tabTitle) {
+			listItems.forEach(function listItemIterator(listItem) {
 
 				$listItems = $listItems.add(
 					'<li'
 					+ '		class="' + listItemClass + '"'
-					+ '		data-id="' + tabTitle.id + '"'
+					+ '		data-id="' + listItem.id + '"'
 					+ '>'
 					+ '	<a href="#" class="' + listItemTextClass + '">'
-					+ '		' + tabTitle.name
+					+ '		' + listItem.name
 					+ '	</a>'
 					+ '	<a href="#" class="' + listItemCheckClass + '">'
 					+ '		<i class="glyphicon glyphicon-ok"></i>'
 					+ '	</a>'
 					+ '	<a class="' + listItemEditClass + '"'
 					+ '		title="Edit"'
-					+ ' 	href="' + urls.edit + tabTitle.id + '/"'
+					+ ' 	href="' + urls.edit + listItem.id + '/"'
 					+ '		target="_blank"'
 					+ '	>'
 					+ '		<i class="glyphicon glyphicon-pencil"></i>'
@@ -370,34 +405,49 @@ $.widget('gp.crudDropdownInput', {
 
 			widget.$dropdownItemsList.empty().append($listItems);
 			widget._updateInputValue();
-			widget._filterList();
-			widget._applyActiveItem();
+			widget._filterListByInputValue();
+			widget._applyActiveItems();
+			widget._toggleListItemsVisibilityClass();
 			responseCallbacks.searchSuccess(widget);
 
 			var $checkButtons = $listItems.find(selectors.listItemCheck);
 			var $deleteButtons = $listItems.find(selectors.listItemDelete);
+			var $listItemTexts = $listItems.find(selectors.listItemText);
 
 			// Select title from dropdown
 			$listItems.on('click', function listItemClickHandler(event) {
 
-				const $listItem = $(this);
-				const $link = $(event.target).closest('a');
-				const linkHref = $link.attr('href');
+				var $listItem = $(this);
+				var $link = $(event.target).closest('a');
+				var linkHref = $link.attr('href');
 
 				// Prevent page scroll
 				if (!linkHref || linkHref === '#') {
 					event.preventDefault();
 				}
 
-				widget._selectListItem($listItem);
-				widget.$input.focus();
+				if (widget.options.isMultiple) {
+
+					widget._selectListItem($listItem, {
+						shouldDeselect: $listItem.is('.active'),
+					});
+
+				} else {
+
+					widget._selectListItem($listItem);
+					widget._focusInput();
+				}
+
 				widget._hideDropdown();
 			});
 
-			// Unselect an item
+			// Deselect/uncheck an item
 			$checkButtons.on('click', function checkClickHandler() {
 
-				widget._selectListItem(null);
+				var $listItem = $(this).closest('.list-item');
+
+				widget._selectListItem($listItem, {shouldDeselect: true});
+				widget._filterListByInputValue();
 				event.stopPropagation();
 			});
 
@@ -420,10 +470,12 @@ $.widget('gp.crudDropdownInput', {
 
 					var requestPayload = _.assign(
 						{id: id},
+						options.ajaxRequestPayload,
 						options.ajaxDeleteRequestPayload
 					);
 
 					$listItem.remove();
+					widget._toggleListItemsVisibilityClass();
 					widget.$inputSearchEraseButton.hide();
 					widget.$loader.show();
 
@@ -454,6 +506,42 @@ $.widget('gp.crudDropdownInput', {
 					;
 				});
 			});
+
+			$listItemTexts.on('keydown', function inputKeydownHandler(event) {
+
+				var $listItemText = $(this);
+				var $listItem = $listItemText.parent();
+				var listItemIndex = $listItem.index();
+
+				// Focus first/last element in the dropdown after pressing up/down keys
+				if (_.includes([keycodes.up, keycodes.down], event.which)) {
+
+					event.stopPropagation();
+
+					var $listItems = widget.$dropdownMenu.find(widget.selectors.listItem + ':visible');
+					var isDownKey = (event.which === keycodes.down);
+
+					if (isDownKey) {
+						if (listItemIndex === $listItems.length - 1) {
+							widget.$newTitleForm.find('input').first().focus();
+							return;
+						}
+					} else {
+						if (listItemIndex === 0) {
+							widget.$input.focus();
+							return;
+						}
+					}
+
+					var $listItemToFocus;
+
+					// Select next/prev item in dropdown depending on which key (up or down) is pressed
+					$listItemToFocus = $listItem[isDownKey ? 'next' : 'prev']();
+
+					$listItemToFocus.find(widget.selectors.listItemText).focus();
+				}
+			});
+
 		});
 
 		return listItemsPromise;
@@ -466,6 +554,10 @@ $.widget('gp.crudDropdownInput', {
 	_focusInput: function() {
 
 		var widget = this;
+
+		if (widget.options.isMultiple) {
+			return;
+		}
 
 		// Timeout is required after toggling the dropdown
 		// because the Bootstrap dropdown plugin sets the focus
@@ -484,13 +576,12 @@ $.widget('gp.crudDropdownInput', {
 		var widget = this;
 		var keycodes = this.keycodes;
 
-		console.log(widget.$input);
 		widget.$input
 
 			.on('click', function inputClickHandler() {
 
 				if (!widget._isDropdownOpen()) {
-					widget._filterList();
+					widget._filterListByInputValue();
 					widget._focusInput();
 				}
 			})
@@ -503,46 +594,13 @@ $.widget('gp.crudDropdownInput', {
 				}
 			})
 
-			.on('keyup', function inputKeyupHandler(event) {
-
-				event.stopPropagation();
-
-				// Don't open dropdown when navigating within input field
-				if (_.includes([keycodes.left, keycodes.right], event.which)) {
-					return;
-				}
-
-				// Close dropdown on Esc key
-				if (event.which === keycodes.esc) {
-					debugger;
-					widget._hideDropdown({restoreFormerValue: true});
-					return;
-				}
-
-				var selectors = widget.selectors;
-				var title = widget.$input.val();
-
-				widget._filterList();
-				widget._showDropdown();
-				widget.$newTitleForm.find('input').val(title);
-
-				// Select item from dropdown on enter key
-				if (event.which === keycodes.enter) {
-
-					var $active = widget._getActiveListItem();
-
-					if (!$active.length) {
-						widget.$newTitleForm.find('.btn-add').click();
-					}
-
-					widget._hideDropdown();
-				}
+			.on('keydown', function inputKeydownHandler(event) {
 
 				// Focus first/last element in the dropdown after pressing up/down keys
 				if (_.includes([keycodes.up, keycodes.down], event.which)) {
 
 					var isDownKey = (event.which === keycodes.down);
-					var $titles = widget.$dropdownMenu.find(selectors.listItemText + ':visible');
+					var $titles = widget.$dropdownMenu.find(widget.selectors.listItemText + ':visible');
 					var $titleToFocus;
 
 					if ($titles.length) {
@@ -563,6 +621,52 @@ $.widget('gp.crudDropdownInput', {
 					$titleToFocus.focus();
 				}
 			})
+
+			.on('keyup', function inputKeyupHandler(event) {
+
+				event.stopPropagation();
+
+				// Don't open dropdown when navigating within input field
+				if (_.includes([keycodes.left, keycodes.right], event.which)) {
+					return;
+				}
+
+				// Close dropdown on Esc key
+				if (event.which === keycodes.esc) {
+					widget._hideDropdown({restoreFormerValue: true});
+					return;
+				}
+
+				var query = widget.$input.val();
+
+				widget._showDropdown();
+				widget._filterListByInputValue();
+				widget.$newTitleForm.find('input').val(query);
+
+				// Select item from dropdown on enter key
+				if (event.which === keycodes.enter) {
+
+					var shouldAddNewItem = true;
+
+					// When only single item can be selected then new item
+					// must not be added when there's an active item in the list
+					if (!widget.options.isMultiple) {
+
+						shouldAddNewItem = !widget.getActiveIds().length;
+
+						// Update input value because of case-insensitive title matching
+						if (!shouldAddNewItem) {
+							widget.$input.val(widget.getActiveTitles()[0]);
+						}
+					}
+
+					if (shouldAddNewItem) {
+						widget.$newTitleForm.find('.btn-add').click();
+					}
+
+					widget._hideDropdown();
+				}
+			})
 		;
 
 		// Clear input field
@@ -575,7 +679,7 @@ $.widget('gp.crudDropdownInput', {
 				// This button triggers the Bootstrap dropdown plugin toggle event
 				// thus we need to open it after the current call stack
 				window.setTimeout(function() {
-					widget._filterList();
+					widget._filterListByInputValue();
 					widget._showDropdown();
 				});
 			}
@@ -599,7 +703,7 @@ $.widget('gp.crudDropdownInput', {
 		if (!widget._isDropdownOpen()) {
 
 			widget.$dropdownToggle.dropdown('toggle');
-			widget.formerId = widget.getActiveId();
+			widget.formerIds = widget.getActiveIds();
 			widget._focusInput();
 		}
 	},
@@ -621,8 +725,8 @@ $.widget('gp.crudDropdownInput', {
 			widget.$dropdownToggle.dropdown('toggle');
 
 			if (options.restoreFormerValue) {
-				widget._setActiveId(widget.formerId);
-				widget._applyActiveItem();
+				widget._setActiveIds(widget.formerIds);
+				widget._applyActiveItems();
 			}
 		}
 	},
@@ -635,8 +739,8 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
-		widget._setActiveId(null);
-		widget._applyActiveItem();
+		widget._setActiveIds([]);
+		widget._applyActiveItems();
 	},
 
 	/**
@@ -650,68 +754,148 @@ $.widget('gp.crudDropdownInput', {
 
 	/**
 	 * Get active value's id
-	 * @returns {number}
+	 * @returns {number[]}
 	 */
-	getActiveId: function() {
-		return Number(this.$hiddenInput.val());
-	},
-
-	/**
-	 * Get active value's id
-	 * @returns {number}
-	 */
-	getActiveText: function() {
+	getActiveIds: function() {
 
 		var widget = this;
 
-		var $activeListItem = widget._getActiveListItem();
-		var $activeListItemLabel = $activeListItem.find(widget.selectors.listItemText);
+		var activeIds = [];
+		var $hiddenInputs = widget._getHiddenInputs();
 
-		return $activeListItemLabel.text().trim();
+		$hiddenInputs.each(function() {
+
+			var activeId = $(this).val();
+
+			activeId = (_.isNil(activeId) || activeId === '') ? null : Number(activeId);
+
+			activeIds.push(activeId);
+		});
+
+		return _.without(activeIds, null);
 	},
 
 	/**
-	 * Set id of active value
-	 * @private
-	 * @param {number|null} [activeId] Will be removed if empty
+	 * Get active value titles
+	 * @returns {string[]}
 	 */
-	_setActiveId: function(activeId) {
-		this.$hiddenInput.val(_.isNil(activeId) ? '' : activeId);
+	getActiveTitles: function() {
+
+		var widget = this;
+
+		var $activeListItems = widget._getActiveListItems();
+		var activeItemTitles = [];
+
+		$activeListItems.each(function() {
+
+			var $activeListItem = $(this);
+			var $activeListItemLabel = $activeListItem.find(widget.selectors.listItemText);
+
+			activeItemTitles.push($activeListItemLabel.text().trim());
+		});
+
+		return activeItemTitles;
 	},
 
 	/**
-	 * Get list item that is marked as active
+	 * Set/update id(s) of active value(s)
+	 * @private
+	 * @param {number[]} activeIds
+	 */
+	_setActiveIds: function(activeIds) {
+
+		var widget = this;
+
+		widget._getHiddenInputs().remove();
+
+		// At least one hidden input field must be added when no item is selected
+		(activeIds.length ? activeIds : ['']).forEach(function(activeId) {
+
+			widget.$container.append(
+				'<input type="hidden"'
+				+ '	name="' + widget.options.hiddenInputName + '"'
+				+ '	value="' + activeId + '"'
+				+ '>'
+			);
+		});
+	},
+
+	/**
+	 * Add active id
+	 * @param {number} id
+	 * @private
+	 */
+	_setActiveId: function(id) {
+
+		var widget = this;
+		var activeIds = widget.getActiveIds();
+
+		activeIds.push(id);
+
+		widget._setActiveIds(activeIds);
+	},
+
+	/**
+	 * Remove active id
+	 * @param {number} id
+	 * @private
+	 */
+	_unsetActiveId: function(id) {
+
+		var widget = this;
+		var activeIds = widget.getActiveIds();
+
+		_.pull(activeIds, id);
+
+		widget._setActiveIds(activeIds);
+	},
+
+	/**
+	 * Get list item(s) that is marked as active
 	 * @private
 	 * @returns {jQuery} Active list item
 	 */
-	_getActiveListItem: function() {
+	_getActiveListItems: function() {
 
-		var $listItems = this.$dropdownItemsList.children();
+		var $activeListItems = this.$dropdownItemsList.children('.active');
 
-		var $activeListItem = $listItems.filter(function() {
-			return $(this).is('.active');
-		});
-
-		return $activeListItem;
+		return $activeListItems;
 	},
 
 	/**
-	 * Add active class to active list item
+	 * Get hidden inputs
 	 * @private
+	 * @return {jQuery}
 	 */
-	_markActiveListItem: function() {
+	_getHiddenInputs: function() {
 
 		var widget = this;
 
-		var activeId = widget.getActiveId();
+		var $hiddenInputs = widget.$container
+			.find('> input[type="hidden"]')
+			.filter('[name="' + widget.options.hiddenInputName + '"]')
+		;
+
+		return $hiddenInputs;
+	},
+
+	/**
+	 * Add active class to active list item(s)
+	 * @private
+	 */
+	_markActiveListItems: function() {
+
+		var widget = this;
+
+		var activeIds = widget.getActiveIds();
 		var $listItems = widget.$dropdownItemsList.children();
 
 		$listItems.each(function() {
 
 			var $listItem = $(this);
-			var listItemId = Number($listItem.data('id'));
+			var listItemId = ($listItem.data('id') === '') ? null : Number($listItem.data('id'));
 
-			$listItem.toggleClass('active', listItemId === activeId);
+			$listItem.toggleClass('active', _.includes(activeIds, listItemId));
 		});
 	},
 
@@ -719,21 +903,18 @@ $.widget('gp.crudDropdownInput', {
 	 * Update widget according to the values of active item
 	 * @private
 	 */
-	_applyActiveItem: function() {
+	_applyActiveItems: function() {
 
 		var widget = this;
 
-		if (widget.$input.length) {
+		// Update the input field with active item title
+		widget._updateInputValue();
 
-			// Update the input field with active item title
-			widget._updateInputValue();
-
-			// Toggles search/erase icon
-			widget._toggleSearchIcon();
-		}
+		// Toggles search/erase icon
+		widget._toggleSearchIcon();
 
 		// Mark selected list item with `active` class
-		widget._markActiveListItem();
+		widget._markActiveListItems();
 	},
 
 	/**
@@ -744,13 +925,17 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
-		var activeId = widget.getActiveId();
+		if (widget.options.isMultiple) {
+			return;
+		}
+
+		var activeIds = widget.getActiveIds();
 		var currentTitle = '';
 
-		widget.listItems.forEach(function(tabTitle) {
+		widget.listItems.forEach(function(listItem) {
 
-			if (tabTitle.id === activeId) {
-				currentTitle = tabTitle.name;
+			if (_.includes(activeIds, listItem.id)) {
+				currentTitle = listItem.name;
 			}
 		});
 
@@ -762,68 +947,105 @@ $.widget('gp.crudDropdownInput', {
 	 * according to the query string in the title input
 	 *
 	 * @private
+	 *
+	 * @description
+	 * Find matching titles in the list (case-insensitive)
+	 * Set active id in the hidden input field
+	 * and mark list item with active class
 	 */
-	_filterList: function() {
+	_filterListByInputValue: function() {
 
 		var widget = this;
+		var selectors = this.selectors;
 
-		if (!widget.$input.length) {
+		widget._toggleListItemsVisibilityClass();
+
+		if (widget.options.isMultiple) {
 			return;
 		}
 
 		var query = widget.$input.val();
-		var $matchedEls = widget._matchInputActiveTitle(query);
+		var $listItems = widget.$dropdownItemsList.children();
+		var matchingId = null;
 
-		// Show only items that matches query from the input field
-		widget._hideTitleEls();
-		$matchedEls.removeClass('hidden');
+		var $matchingListItem = $listItems.filter(function() {
 
-		var $active = widget._getActiveListItem();
+			var $listItem = $(this);
+			var $title = $listItem.find(selectors.listItemText);
+			var title = $title.text().trim();
+			var isTitleMatch = (new RegExp(query, 'gi')).test(title);
+			var isExactMatch = (new RegExp('^' + query.trim() + '$', 'i')).test(title);
+
+			if (isExactMatch) {
+				matchingId = +$listItem.data('id');
+			}
+
+			return isTitleMatch;
+		});
+
+		widget._setActiveIds([matchingId]);
+		widget._markActiveListItems();
+
+		var hasActiveItem = (matchingId !== null);
 
 		// Hide the New title form when there is a title with exact match
-		widget.$newTitleForm.toggle(!$active.length);
-		widget.$newTitleFormDivider.toggleClass('hidden', !!$active.length);
+		widget.$newTitleForm.toggleClass('hidden', hasActiveItem);
+		widget.$newTitleFormDivider.toggleClass('hidden', hasActiveItem);
 
-		// Hide divider when there are no matching titles
-		if (!$matchedEls.length) {
-			widget.$newTitleFormDivider.addClass('hidden');
+		if (query) {
+
+			// Show only items that matches query from the input field
+			$listItems.addClass('hidden');
+			$matchingListItem.removeClass('hidden');
+
+			// Hide divider when there are no matching titles
+			if (!$matchingListItem.length) {
+				widget.$newTitleFormDivider.addClass('hidden');
+			}
+
+		} else {
+
+			$listItems.removeClass('hidden');
 		}
 
-		widget._markActiveListItem();
+		widget._toggleListItemsVisibilityClass();
 		widget._toggleSearchIcon();
-	},
-
-	/**
-	 * Hide the list of tab titles
-	 *
-	 * @private
-	 */
-	_hideTitleEls: function() {
-		this.$dropdownItemsList.children().addClass('hidden');
 	},
 
 	/**
 	 * Actions on item activation
 	 * @private
 	 * @param {jQuery|null} $selectedListItem
+	 * @param {Object} [params]
+	 * @param {boolean} [params.shouldDeselect]
 	 */
-	_selectListItem: function($selectedListItem) {
+	_selectListItem: function($selectedListItem, params) {
+
+		params = params || {};
 
 		var widget = this;
 		var options = this.options;
 		var urls = this.options.urls;
 
-		var selectedId = $($selectedListItem).data('id');
+		var selectedId = Number($($selectedListItem).data('id'));
+
+		if (params.shouldDeselect) {
+			widget._unsetActiveId(selectedId);
+		} else {
+			widget._setActiveId(selectedId);
+		}
 
 		// Set active id to the hidden input field
-		widget._setActiveId(selectedId);
-
-		widget._applyActiveItem();
+		widget._applyActiveItems();
 
 		if (urls.ajaxSelect) {
 
 			var requestPayload = _.assign(
-				{id: selectedId},
+				{
+					id: selectedId,
+					deselect: params.shouldDeselect,
+				},
+				options.ajaxRequestPayload,
 				options.ajaxSelectRequestPayload
 			);
 
@@ -833,9 +1055,9 @@ $.widget('gp.crudDropdownInput', {
 					url: urls.ajaxSelect,
 					data: requestPayload,
 				})
-				.done(function ajaxSelectSuccess() {
+				.done(function ajaxSelectSuccess(response) {
 
-					widget.options.responseCallbacks.selectSuccess(widget);
+					widget.options.responseCallbacks.selectSuccess(widget, response);
 				})
 			;
 		}
@@ -848,6 +1070,11 @@ $.widget('gp.crudDropdownInput', {
 	_toggleSearchIcon: function() {
 
 		var widget = this;
+
+		if (widget.options.isMultiple) {
+			return;
+		}
+
 		var isEmptyField = (widget.$input.val().trim() === '');
 
 		widget.$inputSearchEraseButton
@@ -857,41 +1084,25 @@ $.widget('gp.crudDropdownInput', {
 	},
 
 	/**
-	 * Find matching titles in the list (case-insensitive)
-	 * Set active id in the hidden input field
-	 * and mark list item with active class
-	 *
+	 * Toggle the 'no-visible-items' class to signify list items visibility
 	 * @private
-	 * @param {string} term
-	 * @returns {jQuery}
 	 */
-	_matchInputActiveTitle: function(term) {
+	_toggleListItemsVisibilityClass: function() {
 
 		var widget = this;
-		var selectors = this.selectors;
 
-		var $listItems = widget.$dropdownItemsList.children();
-		var matchingId = null;
+		var hasVisibleItems = !!widget.$dropdownItemsList.children().length;
 
-		var $matching = $listItems.filter(function() {
+		if (!widget.options.isMultiple) {
 
-			var $listItem = $(this);
-			var $title = $listItem.find(selectors.listItemText);
-			var title = $title.text().trim();
-			var isTitleMatch = (new RegExp(term, 'gi')).test(title);
-			var isExactMatch = (new RegExp('^' + term.trim() + '$', 'i')).test(title);
+			var query = widget.$input.val();
 
-			if (isExactMatch) {
-				matchingId = $listItem.data('id');
+			if (query) {
+				hasVisibleItems = !!widget.$dropdownItemsList.find('> :visible').length;
 			}
+		}
 
-			return isTitleMatch;
-		});
-
-		widget._setActiveId(matchingId);
-		widget._markActiveListItem();
-
-		return $matching;
+		widget.$dropdownItemsList.parent().toggleClass('no-visible-items', !hasVisibleItems);
 	},
 
 	/**
@@ -945,7 +1156,11 @@ $.widget('gp.crudDropdownInput', {
 			widget.$inputSearchEraseButton.hide();
 			widget.$loader.show();
 
-			var requestPayload = {};
+			var requestPayload = _.assign(
+				{},
+				options.ajaxRequestPayload,
+				options.ajaxCreateRequestPayload
+			);
 
 			requestPayload[options.ajaxCreateRequestDataKey] = data;
 
@@ -965,7 +1180,7 @@ $.widget('gp.crudDropdownInput', {
 						widget.$input.val(response.name);
 						widget._setActiveId(response.id);
 
-						responseCallbacks.addSuccess(widget, promise);
+						responseCallbacks.createSuccess(widget, promise);
 					}
 					else {
 						bootbox.alert(response.message);

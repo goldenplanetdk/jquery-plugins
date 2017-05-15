@@ -11,12 +11,15 @@
 </head>
 <body>
 
-	<div class="form-group gp-crud-dropdown-input crud-foobar">
+	<div
+		class="form-group gp-crud-dropdown-input crud-foobar"
+		data-hidden-input-name="item"
+	>
 		<label> Items: </label>
 		<new-item-input slot>
 			<input type="text" class="form-control" placeholder="New item">
 		</new-item-input>
-		<input type="hidden" value="1" name="item">
+		<input type="hidden" name="item" value="1">
 	</div>
 
 	<ul class="nav nav-pills">
@@ -42,10 +45,11 @@
 
 	<div
 		class="form-group gp-crud-dropdown-input crud-i18n"
-		data-edit="/foobar/"
-		data-create="/foobar/new"
-		data-delete="/foobar/delete"
-		data-search="/foobar/search"
+		data-url-edit="/foobar/"
+		data-url-ajax-search="/foobar/search"
+		data-url-ajax-create="/foobar/new"
+		data-url-ajax-delete="/foobar/delete"
+		data-hidden-input-name="item"
 	>
 		<label> Multilingual titles: </label>
 		<new-item-input slot>
@@ -85,7 +89,11 @@
 	<hr>
 
 	<p class="lead">Wishlist</p>
-	<div class="gp-crud-dropdown-input crud-wishlist inline">
+	<div
+		class="gp-crud-dropdown-input crud-wishlist inline"
+		data-multiple
+		data-hidden-input-name="wishlist[]"
+	>
 		<dropdown-toggle slot>
 			<button class="btn btn-default">
 				<i class="glyphicon glyphicon-heart"></i>
@@ -97,11 +105,13 @@
 		<add-button-label slot>
 			<i class="glyphicon glyphicon-plus"></i>
 		</add-button-label>
-		<input type="hidden" value="1" name="item">
+		<input type="hidden" name="wishlist[]" value="1">
+		<input type="hidden" name="wishlist[]" value="2">
 	</div>
 	<br>
-	<p>The product is in: <strong id="activeWishlist"></strong></p>
-	<br>
+	<p>The product is in following wishlists</p>
+	<ul id="activeWishlists">
+	</ul>
 	<ul class="nav nav-pills">
 		<li><a href="#wishlistNotes" data-toggle="tab">Notes</a></li>
 		<li><a href="#wishlistCode" data-toggle="tab">Code</a></li>
@@ -121,8 +131,9 @@
 		</div>
 	</div>
 
-
 	<hr>
+
+	<button class="btn btn default" onclick="$.mockjax.clear()"> Disable mockjax </button>
 
 	<script src="//cdn.jsdelivr.net/npm/jquery@2.2.3/dist/jquery.js"></script>
 	<script src="//cdn.jsdelivr.net/npm/jquery-ui-dist@1.12.1/jquery-ui.js"></script>
