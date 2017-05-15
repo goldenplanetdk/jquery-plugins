@@ -19,6 +19,7 @@
  *    <div
  *         class="gp-crud-dropdown-input crud-dropdown-input-for-foobar"
  *         data-edit="{{ path('BEFoobar') }}"
+ *         data-select="{{ path('BEFoobarSelectAjax') }}"
  *         data-create="{{ path('BEFoobarNewAjax') }}"
  *         data-delete="{{ path('BEFoobarDeleteAjax') }}"
  *         data-search="{{ path('BEFoobarSearchAjax') }}"
@@ -161,6 +162,7 @@ $.widget('gp.crudDropdownInput', {
 		var $container = this.element;
 
 		options.urls.edit = urls.edit || $container.data('edit');
+		options.urls.ajaxSelect = urls.ajaxSelect || $container.data('select');
 		options.urls.ajaxCreate = urls.ajaxCreate || $container.data('create');
 		options.urls.ajaxDelete = urls.ajaxDelete || $container.data('delete');
 		options.urls.ajaxSearch = urls.ajaxSearch || $container.data('search');
