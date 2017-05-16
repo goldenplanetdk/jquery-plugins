@@ -633,7 +633,7 @@ $.widget('gp.crudDropdownInput', {
 					return;
 				}
 
-				var query = widget.$input.val();
+				var query = widget.$input.val() || '';
 
 				widget._showDropdown();
 				widget._filterListByInputValue();
@@ -965,7 +965,7 @@ $.widget('gp.crudDropdownInput', {
 			return;
 		}
 
-		var query = widget.$input.val();
+		var query = widget.$input.val() || '';
 		var $listItems = widget.$dropdownItemsList.children();
 		var matchingId = null;
 
@@ -1076,7 +1076,8 @@ $.widget('gp.crudDropdownInput', {
 			return;
 		}
 
-		var isEmptyField = (widget.$input.val().trim() === '');
+		var inputValue = (widget.$input.val() || '');
+		var isEmptyField = (inputValue.trim() === '');
 
 		widget.$inputSearchEraseButton
 			.toggleClass('glyphicon-search', isEmptyField)
@@ -1096,7 +1097,7 @@ $.widget('gp.crudDropdownInput', {
 
 		if (!widget.options.isMultiple) {
 
-			var query = widget.$input.val();
+			var query = widget.$input.val() || '';
 
 			if (query) {
 				hasVisibleItems = !!widget.$dropdownItemsList.find('> :visible').length;
