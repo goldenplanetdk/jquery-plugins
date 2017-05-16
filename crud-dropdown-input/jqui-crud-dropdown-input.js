@@ -80,6 +80,7 @@ $.widget('gp.crudDropdownInput', {
 
 		urls: {
 			edit: null,
+			select: null,
 			ajaxSearch: null,
 			ajaxSelect: null,
 			ajaxCreate: null,
@@ -171,6 +172,7 @@ $.widget('gp.crudDropdownInput', {
 
 		// Options that are specified in JS have higher priority than `data-*` attributes
 		options.urls.edit = urls.edit || $container.data('url-edit');
+		options.urls.select = urls.select || $container.data('url-select');
 		options.urls.ajaxSearch = urls.ajaxSearch || $container.data('url-ajax-search');
 		options.urls.ajaxSelect = urls.ajaxSelect || $container.data('url-ajax-select');
 		options.urls.ajaxCreate = urls.ajaxCreate || $container.data('url-ajax-create');
@@ -379,29 +381,47 @@ $.widget('gp.crudDropdownInput', {
 			// Add list item for each title
 			listItems.forEach(function listItemIterator(listItem) {
 
-				$listItems = $listItems.add(
+				var $listItem = $(
 					'<li'
-					+ '		class="' + listItemClass + '"'
-					+ '		data-id="' + listItem.id + '"'
-					+ '>'
-					+ '	<a href="#" class="' + listItemTextClass + '">'
-					+ '		' + listItem.name
-					+ '	</a>'
-					+ '	<a href="#" class="' + listItemCheckClass + '">'
-					+ '		<i class="glyphicon glyphicon-ok"></i>'
-					+ '	</a>'
-					+ '	<a class="' + listItemEditClass + '"'
-					+ '		title="Edit"'
-					+ ' 	href="' + urls.edit + listItem.id + '/"'
-					+ '		target="_blank"'
-					+ '	>'
-					+ '		<i class="glyphicon glyphicon-pencil"></i>'
-					+ '	</a>'
-					+ '	<a href="#" class="' + listItemDeleteClass + '">'
-					+ '		<i class="glyphicon glyphicon-remove"></i>'
-					+ '	</a>'
-					+ '</li>'
+					+ '	class="' + listItemClass + '"'
+					+ '	data-id="' + listItem.id + '"'
+					+ '></li>'
 				);
+
+				var urlSelect = urls.select ? (urls.select + listItem.id + '/') : '#';
+
+				$listItem.append(
+					'<a href="' + urlSelect + '" class="' + listItemTextClass + '">'
+					+ '		' + listItem.name
+					+ '</a>'
+				);
+
+				$listItem.append(
+					'<a href="#" class="' + listItemCheckClass + '">'
+					+ '		<i class="glyphicon glyphicon-ok"></i>'
+					+ '</a>'
+				);
+
+				if (urls.edit) {
+
+					$listItem.append(
+						'<a class="' + listItemEditClass + '"'
+						+ '		title="Edit"'
+						+ ' 	href="' + urls.edit + listItem.id + '/"'
+						+ '		target="_blank"'
+						+ '>'
+						+ '		<i class="glyphicon glyphicon-pencil"></i>'
+						+ '</a>'
+					);
+				}
+
+				$listItem.append(
+					'<a href="#" class="' + listItemDeleteClass + '">'
+					+ '		<i class="glyphicon glyphicon-remove"></i>'
+					+ '</a>'
+				);
+
+				$listItems = $listItems.add($listItem);
 			});
 
 			widget.$dropdownItemsList.empty().append($listItems);
@@ -417,6 +437,10 @@ $.widget('gp.crudDropdownInput', {
 
 			// Select title from dropdown
 			$listItems.on('click', function listItemClickHandler(event) {
+
+				if (widget.options.urls.select) {
+					return;
+				}
 
 				var $listItem = $(this);
 				var $link = $(event.target).closest('a');
@@ -444,6 +468,10 @@ $.widget('gp.crudDropdownInput', {
 
 			// Deselect/uncheck an item
 			$checkButtons.on('click', function checkClickHandler() {
+
+				if (widget.options.urls.select) {
+					return;
+				}
 
 				var $listItem = $(this).closest('.list-item');
 

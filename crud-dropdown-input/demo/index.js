@@ -106,6 +106,7 @@ $('.crud-wishlist').crudDropdownInput({
 	ajaxCreateRequestDataKey: 'wishlist',
 	urls: {
 		edit: '/wishlist/',
+		select: '/wishlist/',
 		ajaxSearch: '/wishlist/search',
 		ajaxSelect: '/wishlist/select',
 		ajaxCreate: '/wishlist/new',

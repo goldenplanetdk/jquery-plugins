@@ -20,13 +20,17 @@ Contents of the dropdown menu toggle button and the New item form elements
 
 Following data can be specified both as data attributes or in widget options. The latter have higher priority. 
 
-- `data-edit`
-- `data-ajax-search`
-- `data-ajax-select`
-- `data-ajax-create`
-- `data-ajax-delete`
-- `data-multiple`
+- `data-url-edit` Prefix URL for "Edit" button
+- `data-url-select` Show list items as links when that prefix URL is specified, overrides `data-url-ajax-select`
+- `data-url-ajax-search`
+- `data-url-ajax-select`
+- `data-url-ajax-create`
+- `data-url-ajax-delete`
 - `data-hidden-input-name` 
+
+Boolean attributes
+
+- `data-multiple`
 
 Full list of options with default values:
 
@@ -37,52 +41,52 @@ $('.crud-foobar').crudDropdownInput({
     isMultiple: false,
 
     // URL value examples
-	urls: {
-		edit: '/foobar/',
-		ajaxSearch: '/foobar/search',
-		ajaxSelect: '/foobar/select', // optional
-		ajaxCreate: '/foobar/add',
-		ajaxDelete: '/foobar/delete',
-	},
-	
+    urls: {
+        edit: '/foobar/',
+        ajaxSearch: '/foobar/search',
+        ajaxSelect: '/foobar/select', // optional
+        ajaxCreate: '/foobar/add',
+        ajaxDelete: '/foobar/delete',
+    },
+    
     // Key name for the data in ajaxCreate request payload
     // The request will contain `{value: 'Title'}`
-	ajaxCreateRequestDataKey: 'value',
-	
+    ajaxCreateRequestDataKey: 'value',
+    
     // Additional data that will be added to the request payload
     // that by default will contain only the item's id, e.g. `{id: 5}`
-	ajaxSearchRequestPayload: {},
-	ajaxSelectRequestPayload: {},
-	ajaxCreateRequestPayload: {},
-	ajaxDeleteRequestPayload: {},
-	
-	// In order to save selected value in a hidden input field 
-	// (that is required when the widget is in a form)
-	// at least one hidden input must be available
-	// within the widget to infer the `name` attribute value
-	// That input field can be without the `value` attribute
-	// In case if none is available the name can be specified with following property
-	hiddenInputName: 'item',
-	hiddenInputId: 'item', // for single selection only
-	
-	// Invoked when the widget is created for the first time
-	createCallback: function(widget),
-	// Invoked when the widget is initialized/reinitialized
-	initCallback: function(widget),
-	
-	// For every callback the widget instance 
-	// and an AJAX promise (with requested/resolved List Items) is provided
-	responseCallbacks: {
-		searchSuccess: function(widget) {},
-		createSuccess: function(widget, promise) {},
-		deleteSuccess: function(widget, promise) {},
-	},
-	
-	// Translations for Add button label and dialog text
-	translations: {
-		add: 'Add',
-		confirmDelete: 'Are you sure to delete it?',
-	},
+    ajaxSearchRequestPayload: {},
+    ajaxSelectRequestPayload: {},
+    ajaxCreateRequestPayload: {},
+    ajaxDeleteRequestPayload: {},
+    
+    // In order to save selected value in a hidden input field 
+    // (that is required when the widget is in a form)
+    // at least one hidden input must be available
+    // within the widget to infer the `name` attribute value
+    // That input field can be without the `value` attribute
+    // In case if none is available the name can be specified with following property
+    hiddenInputName: 'item',
+    hiddenInputId: 'item', // for single selection only
+    
+    // Invoked when the widget is created for the first time
+    createCallback: function(widget),
+    // Invoked when the widget is initialized/reinitialized
+    initCallback: function(widget),
+    
+    // For every callback the widget instance 
+    // and an AJAX promise (with requested/resolved List Items) is provided
+    responseCallbacks: {
+        searchSuccess: function(widget) {},
+        createSuccess: function(widget, promise) {},
+        deleteSuccess: function(widget, promise) {},
+    },
+    
+    // Translations for Add button label and dialog text
+    translations: {
+        add: 'Add',
+        confirmDelete: 'Are you sure to delete it?',
+    },
 });
 ```
 
