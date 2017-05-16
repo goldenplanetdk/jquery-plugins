@@ -23,7 +23,6 @@
  *         data-url-ajax-select="{{ path('BEFoobarSelectAjax') }}"
  *         data-url-ajax-create="{{ path('BEFoobarNewAjax') }}"
  *         data-url-ajax-delete="{{ path('BEFoobarDeleteAjax') }}"
- *         data-hidden-input-name="item"
  *    >
  *        <label>{{ _('Title') }}:</label>
  *
@@ -85,14 +84,17 @@ $.widget('gp.crudDropdownInput', {
 			ajaxCreate: null,
 			ajaxDelete: null,
 		},
+
 		ajaxSearchQuery: '*',
 		ajaxRequestPayload: null,
 		ajaxSearchRequestPayload: null,
 		ajaxSelectRequestPayload: null,
-		ajaxCreateRequestDataKey: 'newItem',
+		ajaxCreateRequestDataKey: 'value',
 		ajaxCreateRequestPayload: null,
 		ajaxDeleteRequestPayload: null,
+
 		hiddenInputName: null,
+		hiddenInputId: null,
 
 		createCallback: _.noop,
 		initCallback: _.noop,
@@ -145,9 +147,9 @@ $.widget('gp.crudDropdownInput', {
 	/** @type {jQuery} */
 	$inputSearchEraseButton: null,
 	/** @type {jQuery} */
-	$newTitleForm: null,
+	$newItemFormGroup: null,
 	/** @type {jQuery} */
-	$newTitleFormDivider: null,
+	$newItemFormDivider: null,
 	/** @type {jQuery} */
 	$loader: null,
 
@@ -205,8 +207,6 @@ $.widget('gp.crudDropdownInput', {
 		var $addButtonLabelSlot = $container.find('> add-button-label');
 
 		var $label = $container.find('> label:first-child');
-		var $newItemInput = $newItemInputSlot.find('input[type="text"]');
-		var isMultipleInputs = $newItemInput.length > 1;
 
 		var $dropdownToggle = $dropdown.find('> .dropdown-toggle');
 		var $dropdownMenu = $dropdown.find('> .dropdown-menu');
@@ -216,33 +216,21 @@ $.widget('gp.crudDropdownInput', {
 
 		$container.append($dropdown);
 
-		$newItemFormGroup
-			.prepend($newItemInputSlot.children())
-			.toggleClass('multiple-inputs', isMultipleInputs)
-			.toggleClass('single-input', !isMultipleInputs)
+		// Slot with new item inputs
+		$newItemFormGroup.prepend($newItemInputSlot.children());
 
-			/**
-			 * Select last list item when pressing Up key
-			 */
-			.find('input').first().on('keydown', function newItemInputKeydownHandler(event) {
-
-				if (event.which === widget.keycodes.up) {
-
-					widget.$dropdownItemsList.children().last()
-						.find(widget.selectors.listItemText + ':visible')
-						.focus()
-					;
-				}
-			})
-		;
-
+		// Slot with content for dropdown toggle
 		if ($dropdownToggleSlot.length) {
 			$dropdownToggle.empty().append($dropdownToggleSlot.children());
 		}
 
-		// remove empty elements
+		// Slot with content for "Add new item" button
+		$newItemAddButton.html($addButtonLabelSlot.html() || options.translations.add);
+
+		// Remove empty/used elements
 		$newItemInputSlot.remove();
 		$dropdownToggleSlot.remove();
+		$addButtonLabelSlot.remove();
 
 		_.assign(widget, {
 			$container: $container,
@@ -255,20 +243,28 @@ $.widget('gp.crudDropdownInput', {
 
 			$dropdownMenu: $dropdownMenu,
 			$dropdownItemsList: $dropdownMenu.find('.items-list'),
-			$newTitleForm: $newItemFormGroup,
-			$newTitleFormDivider: $dropdownMenu.find('> .divider'),
+			$newItemFormGroup: $newItemFormGroup,
+			$newItemFormDivider: $dropdownMenu.find('> .divider'),
 		});
+
+		if (!options.hiddenInputName) {
+
+			var $hiddenInputs = widget._getHiddenInputs();
+
+			options.hiddenInputName = $hiddenInputs.attr('name') || ('crud_dropdown_input_' + _.random(9999));
+
+			if (!options.isMultiple) {
+				options.hiddenInputId = $hiddenInputs.attr('id');
+			}
+		}
 
 		$label.on('click', function() {
 			$dropdownToggleInput.trigger('focus');
 		});
 
-		$newItemAddButton.html($addButtonLabelSlot.html() || options.translations.add);
-		$addButtonLabelSlot.remove();
-
 		widget._initList();
 		widget._initInput();
-		widget._buildNewTitleForm();
+		widget._initNewItemForm();
 
 		this.options.createCallback(this);
 	},
@@ -523,7 +519,7 @@ $.widget('gp.crudDropdownInput', {
 
 					if (isDownKey) {
 						if (listItemIndex === $listItems.length - 1) {
-							widget.$newTitleForm.find('input').first().focus();
+							widget.$newItemFormGroup.find('input').first().focus();
 							return;
 						}
 					} else {
@@ -641,7 +637,7 @@ $.widget('gp.crudDropdownInput', {
 
 				widget._showDropdown();
 				widget._filterListByInputValue();
-				widget.$newTitleForm.find('input').val(query);
+				widget.$newItemFormGroup.find('input').val(query);
 
 				// Select item from dropdown on enter key
 				if (event.which === keycodes.enter) {
@@ -661,7 +657,7 @@ $.widget('gp.crudDropdownInput', {
 					}
 
 					if (shouldAddNewItem) {
-						widget.$newTitleForm.find('.btn-add').click();
+						widget.$newItemFormGroup.find('.btn-add').click();
 					}
 
 					widget._hideDropdown();
@@ -767,7 +763,7 @@ $.widget('gp.crudDropdownInput', {
 
 			var activeId = $(this).val();
 
-			activeId = (_.isNil(activeId) || activeId === '') ? null : Number(activeId);
+			activeId = activeId ? Number(activeId) : null;
 
 			activeIds.push(activeId);
 		});
@@ -806,6 +802,9 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
+		var inputName = widget.options.hiddenInputName;
+		var inputId = widget.options.hiddenInputId;
+
 		widget._getHiddenInputs().remove();
 
 		// At least one hidden input field must be added when no item is selected
@@ -813,8 +812,9 @@ $.widget('gp.crudDropdownInput', {
 
 			widget.$container.append(
 				'<input type="hidden"'
-				+ '	name="' + widget.options.hiddenInputName + '"'
-				+ '	value="' + activeId + '"'
+				+ '	name="' + inputName + '"'
+				+ (inputId ? (' id="' + inputId + '"') : '')
+				+ '	value="' + (activeId || '') + '"'
 				+ '>'
 			);
 		});
@@ -869,14 +869,7 @@ $.widget('gp.crudDropdownInput', {
 	 */
 	_getHiddenInputs: function() {
 
-		var widget = this;
-
-		var $hiddenInputs = widget.$container
-			.find('> input[type="hidden"]')
-			.filter('[name="' + widget.options.hiddenInputName + '"]')
-		;
-
-		return $hiddenInputs;
+		return this.$container.find('> input[type="hidden"]');
 	},
 
 	/**
@@ -989,8 +982,8 @@ $.widget('gp.crudDropdownInput', {
 		var hasActiveItem = (matchingId !== null);
 
 		// Hide the New title form when there is a title with exact match
-		widget.$newTitleForm.toggleClass('hidden', hasActiveItem);
-		widget.$newTitleFormDivider.toggleClass('hidden', hasActiveItem);
+		widget.$newItemFormGroup.toggleClass('hidden', hasActiveItem);
+		widget.$newItemFormDivider.toggleClass('hidden', hasActiveItem);
 
 		if (query) {
 
@@ -1000,7 +993,7 @@ $.widget('gp.crudDropdownInput', {
 
 			// Hide divider when there are no matching titles
 			if (!$matchingListItem.length) {
-				widget.$newTitleFormDivider.addClass('hidden');
+				widget.$newItemFormDivider.addClass('hidden');
 			}
 
 		} else {
@@ -1109,7 +1102,7 @@ $.widget('gp.crudDropdownInput', {
 	 * Form for localized tab title
 	 * @private
 	 */
-	_buildNewTitleForm: function() {
+	_initNewItemForm: function() {
 
 		var widget = this;
 		var options = this.options;
@@ -1117,30 +1110,52 @@ $.widget('gp.crudDropdownInput', {
 		var keycodes = this.keycodes;
 		var urls = this.options.urls;
 
-		var $newTitleInputs = widget.$newTitleForm.find('input');
-		var $newTitleAddButton = widget.$newTitleForm.find('.btn-add');
+		var $newItemInputs = widget.$newItemFormGroup.find('input');
+		var $newItemAddButton = widget.$newItemFormGroup.find('.btn-add');
 
-		$newTitleInputs.on('keypress', function(event) {
+		var isMultipleInputs = $newItemInputs.length > 1;
 
-			if (event.which === keycodes.enter) {
-				event.preventDefault();
-				widget.$newTitleForm.find('.btn-add').click();
+		widget.$newItemFormGroup
+			.toggleClass('multiple-inputs', isMultipleInputs)
+			.toggleClass('single-input', !isMultipleInputs)
+		;
+		/**
+		 * Select last list item when pressing Up key
+		 */
+		$newItemInputs.first().on('keydown', function newItemInputKeydownHandler(event) {
+
+			if (event.which === widget.keycodes.up) {
+
+				widget.$dropdownItemsList.children().last()
+					.find(widget.selectors.listItemText + ':visible')
+					.focus()
+				;
 			}
 		});
 
-		$newTitleAddButton.on('click', function(event) {
+		$newItemInputs.on('keypress', function(event) {
+
+			if (event.which === keycodes.enter) {
+				event.preventDefault();
+				widget.$newItemFormGroup.find('.btn-add').click();
+			}
+		});
+
+		$newItemAddButton.on('click', function(event) {
 
 			event.preventDefault();
 
 			var $button = $(this);
-			var data = {};
+			var $newItemInputs = widget.$newItemFormGroup.find('input');
+			var isMultipleLocales = $newItemInputs.is('[lang]');
+			var data = isMultipleLocales ? {} : null;
 
-			widget.$newTitleForm.find('input').each(function() {
+			$newItemInputs.each(function newItemInputIterator() {
 
 				var $input = $(this);
 				var lang = $input.attr('lang');
 
-				if (lang) {
+				if (isMultipleLocales) {
 					data[lang] = $input.val().trim();
 				} else {
 					data = $input.val().trim();

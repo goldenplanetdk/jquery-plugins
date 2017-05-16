@@ -26,7 +26,7 @@ Following data can be specified both as data attributes or in widget options. Th
 - `data-ajax-create`
 - `data-ajax-delete`
 - `data-multiple`
-- `data-hidden-input-name`
+- `data-hidden-input-name` 
 
 Full list of options with default values:
 
@@ -46,8 +46,8 @@ $('.crud-foobar').crudDropdownInput({
 	},
 	
     // Key name for the data in ajaxCreate request payload
-    // The request will contain `{newItem: 'Title'}`
-	ajaxCreateRequestDataKey: 'newItem',
+    // The request will contain `{value: 'Title'}`
+	ajaxCreateRequestDataKey: 'value',
 	
     // Additional data that will be added to the request payload
     // that by default will contain only the item's id, e.g. `{id: 5}`
@@ -55,6 +55,15 @@ $('.crud-foobar').crudDropdownInput({
 	ajaxSelectRequestPayload: {},
 	ajaxCreateRequestPayload: {},
 	ajaxDeleteRequestPayload: {},
+	
+	// In order to save selected value in a hidden input field 
+	// (that is required when the widget is in a form)
+	// at least one hidden input must be available
+	// within the widget to infer the `name` attribute value
+	// That input field can be without the `value` attribute
+	// In case if none is available the name can be specified with following property
+	hiddenInputName: 'item',
+	hiddenInputId: 'item', // for single selection only
 	
 	// Invoked when the widget is created for the first time
 	createCallback: function(widget),

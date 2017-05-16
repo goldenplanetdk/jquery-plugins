@@ -13,7 +13,6 @@
 
 	<div
 		class="form-group gp-crud-dropdown-input crud-foobar"
-		data-hidden-input-name="item"
 	>
 		<label> Items: </label>
 		<new-item-input slot>
@@ -49,7 +48,6 @@
 		data-url-ajax-search="/foobar/search"
 		data-url-ajax-create="/foobar/new"
 		data-url-ajax-delete="/foobar/delete"
-		data-hidden-input-name="item"
 	>
 		<label> Multilingual titles: </label>
 		<new-item-input slot>
@@ -62,7 +60,7 @@
 				<input type="text" class="form-control" name="item[da]" lang="da" placeholder="Danish title">
 			</div>
 		</new-item-input>
-		<input type="hidden" name="item">
+		<input type="hidden" name="item" value="">
 	</div>
 	<ul class="nav nav-pills">
 		<li><a href="#i18nNotes" data-toggle="tab">Notes</a></li>
