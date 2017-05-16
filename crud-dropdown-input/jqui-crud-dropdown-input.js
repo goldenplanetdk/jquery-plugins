@@ -802,22 +802,30 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
+		var $hiddenInputs = widget._getHiddenInputs();
 		var inputName = widget.options.hiddenInputName;
 		var inputId = widget.options.hiddenInputId;
 
-		widget._getHiddenInputs().remove();
+		if (widget.options.isMultiple || !$hiddenInputs.length) {
 
-		// At least one hidden input field must be added when no item is selected
-		(activeIds.length ? activeIds : ['']).forEach(function(activeId) {
+			$hiddenInputs.remove();
 
-			widget.$container.append(
-				'<input type="hidden"'
-				+ '	name="' + inputName + '"'
-				+ (inputId ? (' id="' + inputId + '"') : '')
-				+ '	value="' + (activeId || '') + '"'
-				+ '>'
-			);
-		});
+			// At least one hidden input field must be added when no item is selected
+			(activeIds.length ? activeIds : ['']).forEach(function(activeId) {
+
+				widget.$container.append(
+					'<input type="hidden"'
+					+ '	name="' + inputName + '"'
+					+ (inputId ? (' id="' + inputId + '"') : '')
+					+ '	value="' + (activeId || '') + '"'
+					+ '>'
+				);
+			});
+
+		} else {
+
+			$hiddenInputs.val(activeIds[0] || '');
+		}
 	},
 
 	/**
