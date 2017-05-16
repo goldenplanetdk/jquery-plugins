@@ -1,6 +1,10 @@
-// Multiple inputs that share same data can be synchronized
-// by using the create/delete AJAX callbacks
-const ajaxCallback = function(widget, listItemsPromise) {
+/**
+ * Multiple inputs that share same data can be synchronized
+ * by using the create/delete AJAX callbacks
+ *
+ * Shared callback for `crud-foobar` and `crud-i18n`
+ */
+const ajaxListModificationCallback = function(widget, listItemsPromise) {
 
 	$('.crud-foobar, .crud-i18n').each(function() {
 
@@ -13,10 +17,13 @@ const ajaxCallback = function(widget, listItemsPromise) {
 };
 
 const responseCallbacks = {
-	createSuccess: ajaxCallback,
-	deleteSuccess: ajaxCallback,
+	createSuccess: ajaxListModificationCallback,
+	deleteSuccess: ajaxListModificationCallback,
 };
 
+/**
+ * A widget instance with default options, linked with `crud-i18n`
+ */
 $('.crud-foobar').crudDropdownInput({
 	ajaxCreateRequestDataKey: 'brand',
 	urls: {
@@ -28,6 +35,9 @@ $('.crud-foobar').crudDropdownInput({
 	responseCallbacks,
 });
 
+/**
+ * New item title with localization
+ */
 $('.crud-i18n').crudDropdownInput({
 	ajaxCreateRequestDataKey: 'brand',
 	responseCallbacks,
@@ -40,7 +50,25 @@ $('.crud-i18n').crudDropdownInput({
 	},
 });
 
-$('.crud-wishlist').crudDropdownInput({
+/**
+ * Shared callback for wishlists
+ */
+const ajaxWishlistModificationCallback = function(widget, listItemsPromise) {
+
+	$('.crud-product-wishlist, .crud-wishlist').each(function() {
+
+		const widget = $(this).data('gp-crudDropdownInput');
+
+		// Prevent multiple requests by providing reference to a promise
+		widget && widget.reinitList(listItemsPromise);
+	});
+
+};
+
+/**
+ * Product wishlists
+ */
+$('.crud-product-wishlist').crudDropdownInput({
 	ajaxCreateRequestDataKey: 'wishlist',
 	urls: {
 		edit: '/wishlist/',
@@ -53,19 +81,38 @@ $('.crud-wishlist').crudDropdownInput({
 		productId: 33,
 	},
 	responseCallbacks: {
-		searchSuccess: selectSuccess,
-		selectSuccess,
+		searchSuccess: selectProductWishlistSuccess,
+		selectSuccess: selectProductWishlistSuccess,
+		createSuccess: ajaxWishlistModificationCallback,
+		deleteSuccess: ajaxWishlistModificationCallback,
 	},
 });
 
-function selectSuccess(widget) {
+function selectProductWishlistSuccess(widget) {
 
-	const $activeWishlists = $('#activeWishlists').empty();
+	const $activeProductWishlists = $('#activeProductWishlists').empty();
 	const activeIds = widget.getActiveIds();
 	const activeItemTitles = widget.getActiveTitles();
 
 	activeIds.forEach(function(id, index) {
-		$activeWishlists.append(`<li>${id}: ${activeItemTitles[index]}</li>`);
+		$activeProductWishlists.append(`<li>${id}: ${activeItemTitles[index]}</li>`);
 	});
 }
 
+/**
+ * Wishlists
+ */
+$('.crud-wishlist').crudDropdownInput({
+	ajaxCreateRequestDataKey: 'wishlist',
+	urls: {
+		edit: '/wishlist/',
+		ajaxSearch: '/wishlist/search',
+		ajaxSelect: '/wishlist/select',
+		ajaxCreate: '/wishlist/new',
+		ajaxDelete: '/wishlist/delete',
+	},
+	responseCallbacks: {
+		createSuccess: ajaxWishlistModificationCallback,
+		deleteSuccess: ajaxWishlistModificationCallback,
+	},
+});

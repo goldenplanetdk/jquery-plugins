@@ -75,6 +75,7 @@ $.widget('gp.crudDropdownInput', {
 
 	options: {
 
+		isFiltered: true,
 		isMultiple: null,
 
 		urls: {
@@ -246,6 +247,10 @@ $.widget('gp.crudDropdownInput', {
 			$newItemFormGroup: $newItemFormGroup,
 			$newItemFormDivider: $dropdownMenu.find('> .divider'),
 		});
+
+		if (!widget.$input.length) {
+			widget.options.isFiltered = false;
+		}
 
 		if (!options.hiddenInputName) {
 
@@ -633,7 +638,7 @@ $.widget('gp.crudDropdownInput', {
 					return;
 				}
 
-				var query = widget.$input.val() || '';
+				var query = widget.$input.val();
 
 				widget._showDropdown();
 				widget._filterListByInputValue();
@@ -959,16 +964,19 @@ $.widget('gp.crudDropdownInput', {
 		var widget = this;
 		var selectors = this.selectors;
 
-		widget._toggleListItemsVisibilityClass();
+		if (widget.options.isMultiple || !widget.options.isFiltered) {
 
-		if (widget.options.isMultiple) {
+			widget._toggleListItemsVisibilityClass();
+			widget._markActiveListItems();
+
 			return;
 		}
 
-		var query = widget.$input.val() || '';
 		var $listItems = widget.$dropdownItemsList.children();
+		var query = widget.$input.val();
 		var matchingId = null;
 
+		// Find list items that match query in a filtered list
 		var $matchingListItem = $listItems.filter(function() {
 
 			var $listItem = $(this);
@@ -989,7 +997,7 @@ $.widget('gp.crudDropdownInput', {
 
 		var hasActiveItem = (matchingId !== null);
 
-		// Hide the New title form when there is a title with exact match
+		// Hide the New title form along with divider when there is an active item
 		widget.$newItemFormGroup.toggleClass('hidden', hasActiveItem);
 		widget.$newItemFormDivider.toggleClass('hidden', hasActiveItem);
 
@@ -1095,13 +1103,8 @@ $.widget('gp.crudDropdownInput', {
 
 		var hasVisibleItems = !!widget.$dropdownItemsList.children().length;
 
-		if (!widget.options.isMultiple) {
-
-			var query = widget.$input.val() || '';
-
-			if (query) {
-				hasVisibleItems = !!widget.$dropdownItemsList.find('> :visible').length;
-			}
+		if (widget.options.isFiltered) {
+			hasVisibleItems = !!widget.$dropdownItemsList.find('> :visible').length;
 		}
 
 		widget.$dropdownItemsList.parent().toggleClass('no-visible-items', !hasVisibleItems);

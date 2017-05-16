@@ -85,22 +85,36 @@ $.mockjax({
 		const product = products[productId];
 		const wishlist = _.find(wishlists, {id});
 
-		if (deselect) {
-			_.pull(product.wishlists, id);
-			_.pull(wishlist.products, id);
-		} else {
-			if (!_.includes(product.wishlists, id)) {
-				product.wishlists.push(id);
-				wishlist.products.push(id);
+		if (product) {
+
+			if (deselect) {
+
+				_.pull(wishlist.products, id);
+				_.pull(product.wishlists, id);
+
+			} else {
+
+				if (!_.includes(product.wishlists, id)) {
+					product.wishlists.push(id);
+					wishlist.products.push(id);
+				}
 			}
+
+			logServerSideData(product);
+
+			this.responseText = {
+				success: true,
+				productWishlists: product.wishlists,
+			};
+
+		} else {
+
+			bootbox.alert(`Here should redirect to wishlist with id: ${wishlist.id}`)
+
+			this.responseText = {
+				success: true,
+			};
 		}
-
-		logServerSideData(product);
-
-		this.responseText = {
-			success: true,
-			productWishlists: product.wishlists,
-		};
 	},
 });
 
