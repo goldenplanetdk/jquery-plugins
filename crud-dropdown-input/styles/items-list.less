@@ -17,11 +17,25 @@
 		padding-left: @list-horizontal-padding;
 		padding-right: @list-horizontal-padding;
 
-		&.active {
-			background: darken(@dropdown-link-hover-bg, 2%);
+		&:hover,
+		&:focus {
+			box-shadow:
+				// make soft top and bottom borders
+				inset 0 -10px 5px -10px darken(@dropdown-link-hover-bg, 5%),
+				inset 0 10px 5px -10px darken(@dropdown-link-hover-bg, 5%)
+			;
 		}
 
-		&:not(.active) {
+		&.active {
+			background: darken(@dropdown-link-hover-bg, 2%);
+
+			.hide-active& {
+				display: none;
+			}
+		}
+
+		&:not(.active),
+		.items-are-links& {
 
 			.list-item-check {
 				display: none;
@@ -70,6 +84,16 @@
 			&:hover,
 			&:focus {
 				color: @brand-danger;
+			}
+		}
+
+		.items-are-links&.active {
+			pointer-events: none;
+
+			// Hide all buttons for active item when the items are links
+			// e.g. wishlist selection
+			> :not(.list-item-text) {
+				opacity: .4;
 			}
 		}
 	}

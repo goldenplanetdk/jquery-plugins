@@ -28,7 +28,11 @@ products[33] = {
  */
 function logServerSideData(product) {
 
-	console.log(`Product with id ${product.id} is in wishlists: ${product.wishlists}`);
+	if (product) {
+		console.log(`Product with id ${product.id} is in wishlists: ${product.wishlists}`);
+	} else {
+		console.log('Product is removed from wishlists');
+	}
 }
 
 /**
@@ -160,9 +164,10 @@ $.mockjax({
 
 		const {id, productId} = request.data;
 		const product = products[productId];
+		const wishlist = _.find(wishlists, {id});
 
 		_.remove(wishlists, {id});
-		_.pull(product, id);
+		_.pull(product.wishlists, id);
 
 		logServerSideData(product);
 

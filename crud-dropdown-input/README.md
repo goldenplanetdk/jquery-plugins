@@ -104,6 +104,15 @@ See HTML markup example in `gp-jqui-crud-dropdown-input.js`
 
 To make the dropdown appear as `inline-block` (e.g. for Wishlist button) add the `inline` class to the root element
 
+## Styling
+
+To make it easier to style the widget there are a few classes added to signify widget's behaviour
+
+- `single-selection` / `multiple-selection`
+- `filtered-list` / `not-filtered-list` - added when the widget has or not an input for filtering
+- `items-are-links` - added when `urls.select` (or `data-url-select`) is specified in options
+
+Active item(s) can be hidden by adding the `hide-active` class.
 
 ## Public properties
 

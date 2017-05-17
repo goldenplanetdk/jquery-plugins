@@ -251,7 +251,7 @@ $.widget('gp.crudDropdownInput', {
 		});
 
 		if (!widget.$input.length) {
-			widget.options.isFiltered = false;
+			options.isFiltered = false;
 		}
 
 		if (!options.hiddenInputName) {
@@ -264,6 +264,13 @@ $.widget('gp.crudDropdownInput', {
 				options.hiddenInputId = $hiddenInputs.attr('id');
 			}
 		}
+
+		// Add classes for widget behaviours
+		widget.$container.toggleClass('single-selection', !options.isMultiple);
+		widget.$container.toggleClass('multiple-selection', options.isMultiple);
+		widget.$container.toggleClass('filtered-list', options.isFiltered);
+		widget.$container.toggleClass('not-filtered-list', !options.isFiltered);
+		widget.$container.toggleClass('items-are-links', !!options.urls.select);
 
 		$label.on('click', function() {
 			$dropdownToggleInput.trigger('focus');
@@ -488,7 +495,7 @@ $.widget('gp.crudDropdownInput', {
 				// Prevent item selection
 				event.stopPropagation();
 
-				bootbox.confirm(widget.options.translations.confirmDelete, function(okDelete) {
+				bootbox.confirm(widget.options.translations.confirmDelete, function confirmDelete(okDelete) {
 
 					if (!okDelete) {
 						return;
@@ -504,7 +511,9 @@ $.widget('gp.crudDropdownInput', {
 					);
 
 					$listItem.remove();
-					widget._toggleListItemsVisibilityClass();
+					widget._unsetActiveId(id);
+
+					widget._clearInput();
 					widget.$inputSearchEraseButton.hide();
 					widget.$loader.show();
 
@@ -520,8 +529,6 @@ $.widget('gp.crudDropdownInput', {
 
 								var promise = widget.reinitList();
 
-								widget._clearInput();
-
 								responseCallbacks.deleteSuccess(widget, promise);
 
 							} else {
@@ -529,8 +536,10 @@ $.widget('gp.crudDropdownInput', {
 							}
 						})
 						.always(function ajaxDeleteFinally() {
+
 							widget.$inputSearchEraseButton.show();
 							widget.$loader.hide();
+							widget._focusInput();
 						})
 					;
 				});
@@ -584,15 +593,16 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
-		if (widget.options.isMultiple) {
-			return;
-		}
-
 		// Timeout is required after toggling the dropdown
 		// because the Bootstrap dropdown plugin sets the focus
 		// on a dropdown item within the current call stack
 		window.setTimeout(function() {
-			widget.$input.focus();
+
+			if (widget.options.isFiltered) {
+				widget.$input.focus();
+			} else {
+				widget.$newItemFormGroup.find('input').first().focus();
+			}
 		});
 	},
 
@@ -610,8 +620,10 @@ $.widget('gp.crudDropdownInput', {
 			.on('click', function inputClickHandler() {
 
 				if (!widget._isDropdownOpen()) {
-					widget._filterListByInputValue();
-					widget._focusInput();
+
+					// A dropdown toggle button is clicked, prevent closing it
+					// by specifying the `doNotToggle` parameter
+					widget._showDropdown(true);
 				}
 			})
 
@@ -669,7 +681,6 @@ $.widget('gp.crudDropdownInput', {
 				var query = widget.$input.val();
 
 				widget._showDropdown();
-				widget._filterListByInputValue();
 				widget.$newItemFormGroup.find('input').val(query);
 
 				// Select item from dropdown on enter key
@@ -720,18 +731,24 @@ $.widget('gp.crudDropdownInput', {
 	/**
 	 * Show dropdown if closed
 	 * @private
+	 * @param {boolean} [doNotToggle]
 	 * @description
 	 * Before showing the dropdown it updates the filtered
 	 * list by using the current title as the query
 	 * and updates the input value in the new title form
 	 */
-	_showDropdown: function() {
+	_showDropdown: function(doNotToggle) {
 
 		var widget = this;
 
+		widget._filterListByInputValue();
+
 		if (!widget._isDropdownOpen()) {
 
-			widget.$dropdownToggle.dropdown('toggle');
+			if (!doNotToggle) {
+				widget.$dropdownToggle.dropdown('toggle');
+			}
+
 			widget.formerIds = widget.getActiveIds();
 			widget._focusInput();
 		}
@@ -768,8 +785,8 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
-		widget._setActiveIds([]);
-		widget._applyActiveItems();
+		widget.$input.val('');
+		widget._filterListByInputValue();
 	},
 
 	/**
@@ -1025,28 +1042,31 @@ $.widget('gp.crudDropdownInput', {
 
 		var hasActiveItem = (matchingId !== null);
 
-		// Hide the New title form along with divider when there is an active item
-		widget.$newItemFormGroup.toggleClass('hidden', hasActiveItem);
-		widget.$newItemFormDivider.toggleClass('hidden', hasActiveItem);
-
 		if (query) {
 
 			// Show only items that matches query from the input field
 			$listItems.addClass('hidden');
 			$matchingListItem.removeClass('hidden');
 
-			// Hide divider when there are no matching titles
-			if (!$matchingListItem.length) {
-				widget.$newItemFormDivider.addClass('hidden');
-			}
-
 		} else {
 
+			// Show all items when there's no query string
 			$listItems.removeClass('hidden');
 		}
 
-		widget._toggleListItemsVisibilityClass();
+		// Hide the New title form along with divider when there is an active item
+		widget.$dropdownItemsList.parent()
+			.toggleClass('has-active-item', hasActiveItem)
+			.toggleClass('no-active-item', !hasActiveItem)
+		;
+
 		widget._toggleSearchIcon();
+
+		// Boostrap dropdown contents will appear after current call stack
+		// (when called after `_showDropdown`)
+		window.setTimeout(function() {
+			widget._toggleListItemsVisibilityClass();
+		});
 	},
 
 	/**
@@ -1135,7 +1155,10 @@ $.widget('gp.crudDropdownInput', {
 			hasVisibleItems = !!widget.$dropdownItemsList.find('> :visible').length;
 		}
 
-		widget.$dropdownItemsList.parent().toggleClass('no-visible-items', !hasVisibleItems);
+		widget.$dropdownItemsList.parent()
+			.toggleClass('has-visible-items', hasVisibleItems)
+			.toggleClass('no-visible-items', !hasVisibleItems)
+		;
 	},
 
 	/**
