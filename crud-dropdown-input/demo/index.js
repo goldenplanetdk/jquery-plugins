@@ -1,3 +1,7 @@
+window.less.pageLoadFinished.then(function() {
+	$('#compilingLess').remove();
+});
+
 /**
  * Multiple inputs that share same data can be synchronized
  * by using the create/delete AJAX callbacks

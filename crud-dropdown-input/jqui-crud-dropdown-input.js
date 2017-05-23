@@ -921,6 +921,52 @@ $.widget('gp.crudDropdownInput', {
 	},
 
 	/**
+	 * Define whether an element with same title already exists
+	 * @private
+	 * @param {string} name
+	 * @return {boolean}
+	 */
+	_hasItemWithName: function(name) {
+
+		var widget = this;
+		var hasItem;
+
+		hasItem = widget.listItems.some(function(listItem) {
+
+			return (listItem.name === name);
+		});
+
+		return hasItem;
+	},
+
+	/**
+	 * Select item with specified title
+	 * @private
+	 * @param {string} name
+	 */
+	_selectItemWithName: function(name) {
+
+		var widget = this;
+		var selectedItemIndex;
+
+		widget.listItems.some(function(listItem) {
+
+			if (listItem.name === name) {
+
+				selectedItemIndex = listItem.id;
+				return true;
+			}
+		});
+
+		if (selectedItemIndex !== undefined) {
+
+			var $listItem = widget.$dropdownItemsList.children('[data-id="' + selectedItemIndex + '"]');
+
+			widget._selectListItem($listItem);
+		}
+	},
+
+	/**
 	 * Get hidden inputs
 	 * @private
 	 * @return {jQuery}
@@ -1225,8 +1271,14 @@ $.widget('gp.crudDropdownInput', {
 				}
 			});
 
-			// prevent sending request if nothing is entered
-			if ('' === _.values(data).join('')) {
+			// Prevent sending request if nothing is entered
+			if (!_.values(data).join('')) {
+				return;
+			}
+
+			// Prevent creating item with same title
+			if (!isMultipleLocales && widget._hasItemWithName(data)) {
+				widget._selectItemWithName(data);
 				return;
 			}
 

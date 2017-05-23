@@ -24,18 +24,6 @@ products[33] = {
 };
 
 /**
- * Log to console the current server-side data
- */
-function logServerSideData(product) {
-
-	if (product) {
-		console.log(`Product with id ${product.id} is in wishlists: ${product.wishlists}`);
-	} else {
-		console.log('Product is removed from wishlists');
-	}
-}
-
-/**
  * Mock AJAX requests
  */
 $.mockjaxSettings.responseTime = [250, 750];
@@ -48,8 +36,8 @@ $.mockjax({
 	response: function() {
 
 		console.groupCollapsed('Server-side data for wishlists');
-		console.log('Products:', products);
-		console.log('Wishlists:', wishlists);
+		console.log('SERVER Products:', products);
+		console.log('SERVER Wishlists:', wishlists);
 		console.groupEnd();
 
 		this.responseText = wishlists;
@@ -71,7 +59,7 @@ $.mockjax({
 			return _.find(wishlists, {id: productWishlistId});
 		});
 
-		console.log('Product is in wishlists:', productWishlists);
+		console.log('SERVER: Product is in wishlists:', productWishlists);
 
 		this.responseText = productWishlists;
 	},
@@ -104,7 +92,8 @@ $.mockjax({
 				}
 			}
 
-			logServerSideData(product);
+			console.log(`SERVER: Product with id ${product.id} is ${deselect ? 'removed from' : 'added to'} wishlist #${id}`);
+			console.log('SERVER: Product is in wishlists:', product.wishlists);
 
 			this.responseText = {
 				success: true,
@@ -131,24 +120,32 @@ $.mockjax({
 	response: function(request) {
 
 		const {wishlist, productId} = request.data;
-		const id = _.max(_.map(wishlists, 'id')) + 1;
+		const wishlistId = _.max(_.map(wishlists, 'id')) + 1;
 		const product = products[productId];
 
-		wishlists.push({
-			id,
+		const wishlistItem = {
+			id: wishlistId,
 			name: wishlist,
+			products: [],
+		};
+
+		if (product) {
+
 			// Automatically add product to wishlist
-			products: [productId],
-		});
+			wishlistItem.products.push(productId);
 
-		// Automatically add wishlist to product
-		product.wishlists.push(id);
+			// Automatically add wishlist to product
+			product.wishlists.push(wishlistId);
 
-		logServerSideData(product);
+			console.log(`SERVER: Product with id ${product.id} is added to a new wishlist #${wishlistId}`);
+			console.log('SERVER: Product is in wishlists:', product.wishlists);
+		}
+
+		wishlists.push(wishlistItem);
 
 		this.responseText = {
 			success: true,
-			id,
+			id: wishlistId,
 			name: wishlist,
 		};
 	},
@@ -162,14 +159,13 @@ $.mockjax({
 	type: 'POST',
 	response(request) {
 
-		const {id, productId} = request.data;
-		const product = products[productId];
-		const wishlist = _.find(wishlists, {id});
+		const {id} = request.data;
 
+		// Remove wishlist from wish lists
 		_.remove(wishlists, {id});
-		_.pull(product.wishlists, id);
 
-		logServerSideData(product);
+		// Remove wishlist from products list
+		products.forEach((product) => _.pull(product.wishlists, id));
 
 		this.responseText = {
 			success: true,

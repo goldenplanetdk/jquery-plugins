@@ -1,7 +1,7 @@
 {
   "name": "@goldenplanet/jquery",
   "description": "jQuery and jQueryUI plugins for OpenBizBox",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "authors": [
     "Steven Pribilinskiy <stepan@goldenplanet.com>"
   ],
