@@ -500,6 +500,9 @@ $.widget('gp.crudDropdownInput', {
 
 				var $delete = $(this);
 
+				// Prevent scroll
+				event.preventDefault();
+
 				// Prevent item selection
 				event.stopPropagation();
 
