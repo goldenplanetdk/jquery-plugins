@@ -436,7 +436,7 @@ $.widget('gp.crudDropdownInput', {
 			widget._filterListByInputValue();
 			widget._applyActiveItems();
 			widget._toggleListItemsVisibilityClass();
-			responseCallbacks.searchSuccess(widget);
+			responseCallbacks.searchSuccess(widget, listItems);
 
 			var $checkButtons = $listItems.find(selectors.listItemCheck);
 			var $editButtons = $listItems.find(selectors.listItemEdit);
@@ -540,7 +540,7 @@ $.widget('gp.crudDropdownInput', {
 
 								var promise = widget.reinitList();
 
-								responseCallbacks.deleteSuccess(widget, promise);
+								responseCallbacks.deleteSuccess(widget, promise, response);
 
 							} else {
 								bootbox.alert(response.message);
@@ -1321,7 +1321,7 @@ $.widget('gp.crudDropdownInput', {
 						widget.$input.val(response.name);
 						widget._setActiveId(response.id);
 
-						responseCallbacks.createSuccess(widget, promise);
+						responseCallbacks.createSuccess(widget, promise, response);
 					}
 					else {
 						bootbox.alert(response.message);
