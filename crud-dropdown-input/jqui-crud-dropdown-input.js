@@ -439,6 +439,7 @@ $.widget('gp.crudDropdownInput', {
 			responseCallbacks.searchSuccess(widget);
 
 			var $checkButtons = $listItems.find(selectors.listItemCheck);
+			var $editButtons = $listItems.find(selectors.listItemEdit);
 			var $deleteButtons = $listItems.find(selectors.listItemDelete);
 			var $listItemTexts = $listItems.find(selectors.listItemText);
 
@@ -484,6 +485,13 @@ $.widget('gp.crudDropdownInput', {
 
 				widget._selectListItem($listItem, {shouldDeselect: true});
 				widget._filterListByInputValue();
+				event.stopPropagation();
+			});
+
+			// Edit item link
+			$editButtons.on('click', function editClickHandler(event) {
+
+				// Prevent item selection
 				event.stopPropagation();
 			});
 
