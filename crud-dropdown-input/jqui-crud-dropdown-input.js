@@ -1230,10 +1230,13 @@ $.widget('gp.crudDropdownInput', {
 		var $newItemAddButton = widget.$newItemFormGroup.find('.btn-add');
 
 		var isMultipleInputs = $newItemInputs.length > 1;
+		var isMultipleLocales = $newItemInputs.is('[lang]');
 
 		widget.$newItemFormGroup
 			.toggleClass('multiple-inputs', isMultipleInputs)
 			.toggleClass('single-input', !isMultipleInputs)
+			.toggleClass('multiple-locales', isMultipleLocales)
+			.toggleClass('single-locale', !isMultipleLocales)
 		;
 		/**
 		 * Select last list item when pressing Up key

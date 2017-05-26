@@ -7,7 +7,13 @@
 		&.single-input {
 			display: flex;
 
-			input {
+			// For wrapped inputs
+			> :not(input)[lang] {
+				display: flex;
+			}
+
+			input,
+			[lang] {
 				flex-grow: 1;
 				margin-bottom: 0;
 				border-top-right-radius: 0;
