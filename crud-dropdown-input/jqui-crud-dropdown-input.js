@@ -326,10 +326,6 @@ $.widget('gp.crudDropdownInput', {
 					data: requestPayload,
 					dataType: 'json', // for response
 				})
-				.done(function ajaxSearchSuccess(data) {
-
-					return data;
-				})
 			;
 		}
 
@@ -534,7 +530,7 @@ $.widget('gp.crudDropdownInput', {
 							url: urls.ajaxDelete,
 							data: requestPayload,
 						})
-						.done(function ajaxDeleteSuccess(response) {
+						.then(function ajaxDeleteSuccess(response) {
 
 							if (response.success) {
 
@@ -1169,7 +1165,7 @@ $.widget('gp.crudDropdownInput', {
 					url: urls.ajaxSelect,
 					data: requestPayload,
 				})
-				.done(function ajaxSelectSuccess(response) {
+				.then(function ajaxSelectSuccess(response) {
 
 					widget.options.responseCallbacks.selectSuccess(widget, response);
 				})
@@ -1312,7 +1308,7 @@ $.widget('gp.crudDropdownInput', {
 					data: requestPayload,
 					dataType: 'json', // for response
 				})
-				.done(function ajaxCreateSuccess(response) {
+				.then(function ajaxCreateSuccess(response) {
 
 					if (response.success) {
 
