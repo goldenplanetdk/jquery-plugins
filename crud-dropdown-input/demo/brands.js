@@ -13,7 +13,7 @@ window.demoBrands = [
 	},
 	{
 		id: 5,
-		name: 'M\u00e6rsk'
+		name: 'M\u00e6rsk (DA)'
 	},
 	{
 		id: 4,

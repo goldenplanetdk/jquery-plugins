@@ -1071,7 +1071,7 @@ $.widget('gp.crudDropdownInput', {
 		}
 
 		var $listItems = widget.$dropdownItemsList.children();
-		var query = widget.$input.val();
+		var query = widget._escapeRegExp(widget.$input.val());
 		var matchingId = null;
 
 		// Find list items that match query in a filtered list
@@ -1120,6 +1120,18 @@ $.widget('gp.crudDropdownInput', {
 		window.setTimeout(function() {
 			widget._toggleListItemsVisibilityClass();
 		});
+	},
+
+	/**
+	 * Escape user input to be treated as a literal string (grabbed from MDN)
+	 *
+	 * @private
+	 * @param {string} string
+	 * @return {string}
+	 */
+	_escapeRegExp: function(string) {
+
+		return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 	},
 
 	/**
