@@ -152,7 +152,10 @@
 
 		<hr>
 		<p class="lead">Wishlist</p>
-		<div class="gp-crud-dropdown-input crud-wishlist">
+		<div
+			class="gp-crud-dropdown-input crud-wishlist"
+			data-dropup
+		>
 			<dropdown-toggle slot>
 				<a href="#" class="btn btn-default btn-block">
 					<span class="title"> Sport </span>
@@ -172,6 +175,7 @@
 		<div class="tab-content">
 			<div class="tab-pane" id="wishlistNotes">
 				<ul>
+					<li><code>data-dropup</code> boolean attribute added</li>
 					<li>Disabled filtering of dropdown list items by replacing the
 						<code>dropdown-toggle</code> contents with a button
 					</li>

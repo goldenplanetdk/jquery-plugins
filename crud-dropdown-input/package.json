@@ -1,5 +1,5 @@
 {
-  "name": "@goldenplanet/jquery/crud-dropdown-input",
+  "name": "@goldenplanet/jquery-crud-dropdown-input",
   "description": "CRUD dropdown input",
   "homepage": "https://github.com/goldenplanetdk/jquery-plugins/tree/master/crud-dropdown-input",
   "main": "index.js",

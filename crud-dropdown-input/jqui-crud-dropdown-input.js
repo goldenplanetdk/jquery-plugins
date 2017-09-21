@@ -183,6 +183,8 @@ $.widget('gp.crudDropdownInput', {
 			options.isMultiple = $container.is('[data-multiple]');
 		}
 
+		options.isDropup = $container.is('[data-dropup]');
+
 		var $dropdown = $(
 			'<div class="dropdown">'
 			+ '	<span class="dropdown-toggle" data-toggle="dropdown">'
@@ -234,6 +236,9 @@ $.widget('gp.crudDropdownInput', {
 		$newItemInputSlot.remove();
 		$dropdownToggleSlot.remove();
 		$addButtonLabelSlot.remove();
+
+		// Add dropup class for dropdowns that must be opened upwards
+		options.isDropup && $dropdown.addClass('dropup');
 
 		_.assign(widget, {
 			$container: $container,

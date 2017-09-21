@@ -30,6 +30,7 @@ Following data can be specified both as data attributes or in widget options. Th
 
 Boolean attributes
 
+- `data-dropup`
 - `data-multiple`
 
 Full list of options with default values:
