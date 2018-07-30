@@ -24,6 +24,10 @@ window.demoBrands = [
 		name: 'Nokia'
 	},
 	{
+		id: 222,
+		name: ''
+	},
+	{
 		id: 9,
 		name: 'Porsche'
 	},

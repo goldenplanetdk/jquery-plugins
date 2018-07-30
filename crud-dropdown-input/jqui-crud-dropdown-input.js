@@ -476,7 +476,7 @@ $.widget('gp.crudDropdownInput', {
 			});
 
 			// Deselect/uncheck an item
-			$checkButtons.on('click', function checkClickHandler() {
+			$checkButtons.on('click', function checkClickHandler(event) {
 
 				if (widget.options.urls.select) {
 					return;
@@ -486,6 +486,8 @@ $.widget('gp.crudDropdownInput', {
 
 				widget._selectListItem($listItem, {shouldDeselect: true});
 				widget._filterListByInputValue();
+
+				event.preventDefault();
 				event.stopPropagation();
 			});
 
@@ -1088,7 +1090,8 @@ $.widget('gp.crudDropdownInput', {
 			var isTitleMatch = (new RegExp(query, 'gi')).test(title);
 			var isExactMatch = (new RegExp('^' + query.trim() + '$', 'i')).test(title);
 
-			if (isExactMatch) {
+			// TODO Make items selected by ID
+			if (isExactMatch && title) {
 				matchingId = +$listItem.data('id');
 			}
 
