@@ -4,7 +4,7 @@
   "homepage": "https://github.com/goldenplanetdk/jquery-plugins/tree/master/crud-dropdown-input",
   "main": "index.js",
   "dependencies": {
-    "bootbox": "^4.4.0",
+    "bootbox": "^5.4.0",
     "clusterize.js": "^0.17.6",
     "jquery": "^3.3.1",
     "jquery-ui-dist": "^1.12.1",
