@@ -931,6 +931,7 @@ $.widget('gp.crudDropdownInput', {
 		activeIds.push(id);
 
 		widget._setActiveIds(activeIds);
+		widget.$container.trigger("dropdown.enable", [id]);
 	},
 
 	/**
@@ -946,6 +947,7 @@ $.widget('gp.crudDropdownInput', {
 		_.pull(activeIds, id);
 
 		widget._setActiveIds(activeIds);
+		widget.$container.trigger("dropdown.disable", [id]);
 	},
 
 	/**
