@@ -1364,6 +1364,7 @@ $.widget('gp.crudDropdownInput', {
 					if (response.success) {
 
 						var promise = widget.reinitList();
+						widget.$container.trigger("dropdown.create", [{title: response.name, id: response.id}]);
 
 						widget.$input.val(response.name);
 						widget._setActiveId(response.id);
