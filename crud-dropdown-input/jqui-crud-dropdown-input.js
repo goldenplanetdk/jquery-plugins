@@ -870,9 +870,35 @@ $.widget('gp.crudDropdownInput', {
 		var inputName = widget.options.hiddenInputName;
 		var inputId = widget.options.hiddenInputId;
 
-		if (widget.options.isMultiple || !$hiddenInputs.length) {
+		if (widget.options.isMultiple) {
+			widget.$container.find('option').each(function () {
+				this.selected = activeIds.includes(Number(this.value));
+			});
+			var currentInputsValues = [];
+			widget._getHiddenInputs().each(function () {
+				currentInputsValues.push(Number(this.value));
+			});
 
-			$hiddenInputs.remove();
+			if(currentInputsValues.length < activeIds.length) {
+				var $lastOption = widget.$container.find('option').last();
+				var missingValues = activeIds.filter(function (x) {
+					return !currentInputsValues.includes(x)
+				});
+				missingValues.forEach(function (missingValue) {
+					var $missedOption = $lastOption.clone();
+					var item = widget.listItems.find(function (x) {
+						return x.id === missingValue
+					});
+					$missedOption.val(missingValue)
+						.attr("selected", "selected")
+						.text(item ? item.title : 'new');
+
+					$lastOption.after($missedOption);
+				});
+			}
+			return;
+		}
+		if (!$hiddenInputs.length) {
 
 			// At least one hidden input field must be added when no item is selected
 			(activeIds.length ? activeIds : ['']).forEach(function(activeId) {
@@ -905,6 +931,7 @@ $.widget('gp.crudDropdownInput', {
 		activeIds.push(id);
 
 		widget._setActiveIds(activeIds);
+		widget.$container.trigger("dropdown.enable", [id]);
 	},
 
 	/**
@@ -920,6 +947,7 @@ $.widget('gp.crudDropdownInput', {
 		_.pull(activeIds, id);
 
 		widget._setActiveIds(activeIds);
+		widget.$container.trigger("dropdown.disable", [id]);
 	},
 
 	/**
@@ -987,6 +1015,10 @@ $.widget('gp.crudDropdownInput', {
 	 */
 	_getHiddenInputs: function() {
 
+		if (this.options.isMultiple) {
+			return this.$container.find("option:selected")
+		}
+
 		return this.$container.find('> input[type="hidden"]');
 	},
 
@@ -1036,21 +1068,17 @@ $.widget('gp.crudDropdownInput', {
 
 		var widget = this;
 
-		if (widget.options.isMultiple) {
-			return;
-		}
-
 		var activeIds = widget.getActiveIds();
-		var currentTitle = '';
+		var itemTitles = [];
 
 		widget.listItems.forEach(function(listItem) {
 
 			if (_.includes(activeIds, listItem.id)) {
-				currentTitle = listItem.name;
+				itemTitles.push(listItem.name);
 			}
 		});
 
-		widget.$input.val(currentTitle);
+		widget.$input.val(itemTitles.join(', '));
 	},
 
 	/**
@@ -1336,6 +1364,7 @@ $.widget('gp.crudDropdownInput', {
 					if (response.success) {
 
 						var promise = widget.reinitList();
+						widget.$container.trigger("dropdown.create", [{title: response.name, id: response.id}]);
 
 						widget.$input.val(response.name);
 						widget._setActiveId(response.id);
