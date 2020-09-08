@@ -406,7 +406,7 @@ $.widget('gp.crudDropdownInput', {
 
 				$listItem.append(
 					'<a href="#" class="' + listItemCheckClass + '">'
-					+ '		<i class="glyphicon glyphicon-ok"></i>'
+					+ '		<i class="glyphicon glyphicon-remove"></i>'
 					+ '</a>'
 				);
 
@@ -425,7 +425,7 @@ $.widget('gp.crudDropdownInput', {
 
 				$listItem.append(
 					'<a href="#" class="' + listItemDeleteClass + '">'
-					+ '		<i class="glyphicon glyphicon-remove"></i>'
+					+ '		<i class="glyphicon glyphicon-trash"></i>'
 					+ '</a>'
 				);
 
