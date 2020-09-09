@@ -352,6 +352,13 @@ $.widget('gp.crudDropdownInput', {
 		return widget._initList(listItemsPromise);
 	},
 
+	refreshValues: function () {
+		var widget = this;
+		const currentElements = widget.getActiveIds();
+		widget.reinitList();
+		widget._setActiveIds(currentElements);
+	},
+
 	/**
 	 * Populate list of tab titles dropdown and show it
 	 * @private
@@ -891,7 +898,7 @@ $.widget('gp.crudDropdownInput', {
 					});
 					$missedOption.val(missingValue)
 						.attr("selected", "selected")
-						.text(item ? item.title : 'new');
+						.text(item ? item.title : widget.$input.val());
 
 					$lastOption.after($missedOption);
 				});
@@ -1097,17 +1104,10 @@ $.widget('gp.crudDropdownInput', {
 		var widget = this;
 		var selectors = this.selectors;
 
-		if (widget.options.isMultiple || !widget.options.isFiltered) {
-
-			widget._toggleListItemsVisibilityClass();
-			widget._markActiveListItems();
-
-			return;
-		}
-
 		var $listItems = widget.$dropdownItemsList.children();
 		var query = widget._escapeRegExp(widget.$input.val());
-		var matchingId = null;
+		var showAlreadySelected = !!widget.options.isMultiple;
+		var matchingId = showAlreadySelected ? widget.getActiveIds() : [];
 
 		// Find list items that match query in a filtered list
 		var $matchingListItem = $listItems.filter(function() {
@@ -1117,19 +1117,24 @@ $.widget('gp.crudDropdownInput', {
 			var title = $title.text().trim();
 			var isTitleMatch = (new RegExp(query, 'gi')).test(title);
 			var isExactMatch = (new RegExp('^' + query.trim() + '$', 'i')).test(title);
+			const itemId = +$listItem.data('id');
+
+			if (showAlreadySelected) {
+				return ~widget.getActiveIds().indexOf(itemId) || isTitleMatch;
+			}
 
 			// TODO Make items selected by ID
 			if (isExactMatch && title) {
-				matchingId = +$listItem.data('id');
+				matchingId = [itemId];
 			}
 
 			return isTitleMatch;
 		});
 
-		widget._setActiveIds([matchingId]);
+		widget._setActiveIds(matchingId);
 		widget._markActiveListItems();
 
-		var hasActiveItem = (matchingId !== null);
+		var hasActiveItem = !!matchingId.length;
 
 		if (query) {
 
@@ -1144,10 +1149,17 @@ $.widget('gp.crudDropdownInput', {
 		}
 
 		// Hide the New title form along with divider when there is an active item
-		widget.$dropdownItemsList.parent()
-			.toggleClass('has-active-item', hasActiveItem)
-			.toggleClass('no-active-item', !hasActiveItem)
-		;
+		if(showAlreadySelected) {
+			widget.$dropdownItemsList.parent()
+				.toggleClass('has-active-item', false)
+				.toggleClass('no-active-item', true)
+			;
+		} else {
+			widget.$dropdownItemsList.parent()
+				.toggleClass('has-active-item', hasActiveItem)
+				.toggleClass('no-active-item', !hasActiveItem)
+			;
+		}
 
 		widget._toggleSearchIcon();
 
