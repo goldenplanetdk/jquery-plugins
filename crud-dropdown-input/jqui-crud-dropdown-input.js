@@ -111,6 +111,8 @@ $.widget('gp.crudDropdownInput', {
 			add: 'Add',
 			confirmDelete: 'Are you sure to delete it?',
 		},
+
+		groupPromise: null,
 	},
 
 	keycodes: {
@@ -281,7 +283,7 @@ $.widget('gp.crudDropdownInput', {
 			$dropdownToggleInput.trigger('focus');
 		});
 
-		widget._initList();
+		widget._initList(options.groupPromise);
 		widget._initInput();
 		widget._initNewItemForm();
 
