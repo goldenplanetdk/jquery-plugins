@@ -1118,7 +1118,7 @@ $.widget('gp.crudDropdownInput', {
 			var $title = $listItem.find(selectors.listItemText);
 			var title = $title.text().trim();
 			var isTitleMatch = (new RegExp(query, 'gi')).test(title);
-			var isExactMatch = (new RegExp('^' + query.trim() + '$', 'i')).test(title);
+			var isExactMatch = (new RegExp('^' + query.trim() + '$')).test(title);
 			const itemId = +$listItem.data('id');
 
 			if (showAlreadySelected) {
